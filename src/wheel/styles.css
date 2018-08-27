@@ -1,0 +1,27 @@
+.wheel-picker {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  background-color: gray;
+  user-select: none;
+  overflow: visible;
+  position: relative;
+}
+
+.wheel-picker .current-value {
+  width: 100%;
+  position: absolute;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.wheel-picker .value {
+  padding: 5px 0;
+  letter-spacing: 1px;
+  border-top: 1px solid black;
+}
+
+.wheel-picker .value.active {
+  color: red;
+}

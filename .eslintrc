@@ -1,0 +1,99 @@
+{
+	"root": true,
+
+	"extends": ["eslint:recommended", "plugin:prettier/recommended", "plugin:react/recommended"],
+
+	"env": {
+        "es6": true,
+        "browser": true
+	},
+
+	"parserOptions": {
+		"ecmaVersion": 6,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "jsx": true,
+            "experimentalObjectRestSpread": true
+          }
+	},
+
+	"rules": {
+		"quotes": [
+			"error",
+			"single",
+			{
+				"avoidEscape": true,
+				"allowTemplateLiterals": true
+			}
+		],
+		"accessor-pairs": "error",
+		"camelcase": ["warn", { "properties": "always" }],
+		"eqeqeq": ["warn", "smart"],
+		"handle-callback-err": ["error", "^(err|error)$"],
+		"new-cap": ["error", { "newIsCap": true, "capIsNew": false }],
+		"no-array-constructor": "error",
+		"no-caller": "error",
+		"no-eval": "error",
+		"no-extend-native": "error",
+		"no-extra-bind": "error",
+		"no-implied-eval": "error",
+		"no-inner-declarations": ["error", "functions"],
+		"no-label-var": "error",
+		"no-labels": "error",
+		"no-lone-blocks": "error",
+		"no-mixed-operators": [
+			"error",
+			{
+				"groups": [
+					["==", "!=", "===", "!==", ">", ">=", "<", "<="],
+					["&&", "||"],
+					["in", "instanceof"]
+				],
+				"allowSamePrecedence": true
+			}
+		],
+		"no-multi-str": "error",
+		"no-new": "warn",
+		"no-new-func": "error",
+		"no-new-object": "error",
+		"no-new-require": "error",
+		"no-new-wrappers": "error",
+		"no-octal-escape": "error",
+		"no-path-concat": "error",
+		"no-proto": "error",
+		"no-return-assign": "error",
+		"no-self-compare": "error",
+		"no-sequences": "error",
+		"no-shadow-restricted-names": "error",
+		"no-template-curly-in-string": "warn",
+		"no-throw-literal": "error",
+		"no-undef-init": "error",
+		"no-unmodified-loop-condition": "error",
+		"no-unneeded-ternary": ["error", { "defaultAssignment": false }],
+		"no-unused-expressions": "off",
+		"no-unused-vars": ["error", { "vars": "all", "args": "none" }],
+		"no-use-before-define": "error",
+		"no-useless-call": "error",
+		"no-useless-computed-key": "error",
+		"no-useless-return": "error",
+		"no-with": "error",
+		"prefer-promise-reject-errors": "error",
+		"spaced-comment": [
+			"error",
+			"always",
+			{
+				"line": {
+					"exceptions": ["-", "+", "*"],
+					"markers": ["!", "/"]
+				},
+				"block": {
+					"exceptions": ["-", "+", "*"],
+					"markers": ["!", "*"],
+					"balanced": true
+				}
+			}
+		],
+		"valid-typeof": "error",
+		"yoda": ["error", "never"]
+	}
+}
