@@ -2,10 +2,11 @@
   width: 100%;
   height: 100%;
   text-align: center;
-  background-color: gray;
   user-select: none;
   overflow: visible;
   position: relative;
+  border: 1px solid black;
+  color: black;
 }
 
 .wheel-picker .current-value {
@@ -19,9 +20,47 @@
 .wheel-picker .value {
   padding: 5px 0;
   letter-spacing: 1px;
+  border-top: 1px solid transparent;
+}
+
+.choose-started .wheel-picker .value {
   border-top: 1px solid black;
 }
 
 .wheel-picker .value.active {
-  color: red;
+  /* color: red; */
+}
+
+.button {
+    text-align: center;
+    padding: 2px 0;
+}
+
+.button.hidden {
+  visibility: hidden;
+}
+
+.button:hover {
+  cursor: pointer;
+}
+
+.arrow {
+    border: solid darkblue;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 5px;
+}
+
+.button:hover .arrow {
+  border-color: orange;
+}
+
+.arrow.up {
+    transform: rotate(-135deg);
+    margin-top: 6px;
+}
+
+.arrow.down {
+    transform: rotate(45deg);
+    margin-bottom: 6px;
 }

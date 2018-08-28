@@ -56,7 +56,6 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							values={meridiems}
 							valueFormater={timeFormater}
-							activeValues={1}
 						/>
 					</div>
 				) : (
