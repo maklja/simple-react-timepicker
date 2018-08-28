@@ -1,12 +1,52 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-// import { Motion, spring } from 'react-motion';
+import { Motion, spring } from 'react-motion';
 
 import Button, { DIRECTION } from '../buttons/DefaultButton';
 
 import './styles.css';
 
 const MOVE_DELTA = 10;
+const springSetting1 = { stiffness: 390, damping: 17 };
+
+// const WheelAnimation = ({enabled, translateY, animationSettings, children} => {
+
+// 	return enabled ? <Motion style={animationSettings}>{children}</Motion>
+// })
+
+const Wheel = ({
+	values,
+	selectedIndex,
+	onMouseDown,
+	onMouseMove,
+	onElementCreated,
+	valueFormater,
+	valueVisibility,
+	translateY
+}) => {
+	return (
+		<div
+			onMouseDown={onMouseDown}
+			onMouseMove={onMouseMove}
+			ref={onElementCreated}
+			style={{
+				transform: `translateY(${translateY}px)`
+			}}
+		>
+			{values.map((curVal, i) => (
+				<div
+					key={i}
+					className={`value ${selectedIndex === i ? 'active' : ''}`}
+					style={{
+						...valueVisibility(i, selectedIndex)
+					}}
+				>
+					{valueFormater(curVal)}
+				</div>
+			))}
+		</div>
+	);
+};
 
 export default class WheelPicker extends React.Component {
 	constructor(props) {
@@ -23,8 +63,12 @@ export default class WheelPicker extends React.Component {
 			chooseValuesNumber: Math.min(
 				chooseValuesNumber,
 				Math.floor(values.length / 2)
-			)
+			),
+			enableAnimation: true,
+			animationSettings: {}
 		};
+
+		this._scroll = {};
 
 		this._values = [];
 		const n = values.length * 3;
@@ -38,6 +82,7 @@ export default class WheelPicker extends React.Component {
 		this._onMouseLeave = this._onMouseLeave.bind(this);
 		this._onWheel = this._onWheel.bind(this);
 		this._moveToNextValue = this._moveToNextValue.bind(this);
+		this._getValueVisibility = this._getValueVisibility.bind(this);
 	}
 
 	render() {
@@ -46,10 +91,11 @@ export default class WheelPicker extends React.Component {
 			translate,
 			chooseStarted,
 			elementHeight,
-			chooseValuesNumber
+			chooseValuesNumber,
+			animationSettings
 		} = this.state;
 		// calculate current selected value
-		const selectedValueIndex =
+		const selectedIndex =
 			Math.round(Math.abs(translate / elementHeight)) || 0;
 		// is component is in  choose mode we need to calculate the view port so the user can
 		// see more vvalues from the wheel
@@ -67,6 +113,18 @@ export default class WheelPicker extends React.Component {
 
 		const chooseClass = chooseStarted ? 'choose-started' : '';
 
+		const translateY = translate + activeDelta;
+		const tt = {
+			...springSetting1,
+			...animationSettings,
+			translateY: spring(translateY, {
+				...springSetting1,
+				...animationSettings
+			})
+			// stiffness: 0,
+		};
+		console.log(tt);
+		const enableAnimation = false;
 		return (
 			<div className={chooseClass}>
 				<Button onClick={this._moveToNextValue} visible={showButtons} />
@@ -88,32 +146,41 @@ export default class WheelPicker extends React.Component {
 							...chooseStyle
 						}}
 					>
-						<div
-							onMouseDown={this._onMouseDown}
-							onMouseMove={this._onMouseMove}
-							ref={el => (this._valuePickerEl = el)}
-							style={{
-								transform: `translateY(${translate +
-									activeDelta}px)`
-							}}
-						>
-							{this._values.map((curVal, i) => (
-								<div
-									key={i}
-									className={`value ${
-										selectedValueIndex === i ? 'active' : ''
-									}`}
-									style={{
-										...this._getValueVisibility(
-											i,
-											selectedValueIndex
-										)
-									}}
-								>
-									{valueFormater(curVal)}
-								</div>
-							))}
-						</div>
+						{enableAnimation ? (
+							<Motion style={tt}>
+								{({ translateY }) => (
+									<Wheel
+										values={this._values}
+										onElementCreated={el =>
+											(this._valuePickerEl = el)
+										}
+										onMouseDown={this._onMouseDown}
+										onMouseMove={this._onMouseMove}
+										selectedIndex={selectedIndex}
+										animationSettings={tt}
+										valueFormater={valueFormater}
+										valueVisibility={
+											this._getValueVisibility
+										}
+										translateY={translateY}
+									/>
+								)}
+							</Motion>
+						) : (
+							<Wheel
+								values={this._values}
+								onElementCreated={el =>
+									(this._valuePickerEl = el)
+								}
+								onMouseDown={this._onMouseDown}
+								onMouseMove={this._onMouseMove}
+								selectedIndex={selectedIndex}
+								animationSettings={tt}
+								valueFormater={valueFormater}
+								valueVisibility={this._getValueVisibility}
+								translateY={translateY}
+							/>
+						)}
 					</div>
 				</div>
 				<Button
@@ -221,31 +288,44 @@ export default class WheelPicker extends React.Component {
 	}
 
 	_resetScrollPosition(mousePosition = 0) {
-		// get values for startPosition that is initial value,
-		// and value when we need to reset translation to startPosition
-		const { startPosition, resetPosition, initPosition } = this._scroll;
-		// scrollable component top position
-		const { top } = this._valuePickerEl.getBoundingClientRect();
+		return new Promise(resolve => {
+			// get values for startPosition that is initial value,
+			// and value when we need to reset translation to startPosition
+			const { startPosition, resetPosition, initPosition } = this._scroll;
+			// scrollable component top position
+			const top = Math.round(
+				this._valuePickerEl.getBoundingClientRect().top
+			);
 
-		if (top < resetPosition + MOVE_DELTA + initPosition) {
-			this.setState({
-				translate: startPosition,
-				dragStartPosition: mousePosition - startPosition
-			});
+			if (top <= resetPosition + initPosition) {
+				this.setState(
+					{
+						translate: startPosition,
+						dragStartPosition: mousePosition - startPosition,
+						animationSettings: { stiffness: 390, damping: 17 }
+					},
+					resolve
+				);
+				// only go to half of the first time array
+			} else if (top - initPosition >= startPosition / 2) {
+				const targetPosition = (3 / 2) * startPosition;
 
-			// only go to half of the first time array
-		} else if (top - initPosition >= startPosition / 2) {
-			const targetPosition = (3 / 2) * startPosition;
-
-			this.setState({
-				translate: targetPosition,
-				dragStartPosition: mousePosition - targetPosition
-			});
-		}
+				this.setState(
+					{
+						translate: targetPosition,
+						dragStartPosition: mousePosition - targetPosition,
+						animationSettings: { stiffness: 390, damping: 17 }
+					},
+					resolve
+				);
+			} else {
+				resolve();
+			}
+		});
 	}
 
-	_getValueVisibility(index, selectedValueIndex) {
-		const difference = Math.abs(index - selectedValueIndex);
+	_getValueVisibility(index, selectedIndex) {
+		const difference = Math.abs(index - selectedIndex);
 		const { chooseValuesNumber } = this.state;
 
 		if (difference <= chooseValuesNumber) {
@@ -269,26 +349,36 @@ export default class WheelPicker extends React.Component {
 
 	_moveToNextValue(direction) {
 		// check if reset position is needed to maintain illusion of infitite scroll
-		this._resetScrollPosition();
+		this._resetScrollPosition().then(() =>
+			this.setState(prevState => {
+				const {
+					translate,
+					elementHeight,
+					dragStartPosition
+				} = prevState;
+				// calculate new translate position and also calculate new dragStartPosition
+				// to enable draging and scrolling in the same time
+				const newTranslatePosition =
+					translate + elementHeight * direction;
 
-		this.setState(prevState => {
-			const { translate, elementHeight, dragStartPosition } = prevState;
-			// calculate new translate position and also calculate new dragStartPosition
-			// to enable draging and scrolling in the same time
-			const newTranslatePosition = translate + elementHeight * direction;
+				// round position is the value is visible to the user
+				const roundNewTranslatePosition = this._translateRoundPosition(
+					newTranslatePosition,
+					elementHeight
+				);
+				const roundDelta =
+					newTranslatePosition - roundNewTranslatePosition;
 
-			// round position is the value is visible to the user
-			const roundNewTranslatePosition = this._translateRoundPosition(
-				newTranslatePosition,
-				elementHeight
-			);
-			const roundDelta = newTranslatePosition - roundNewTranslatePosition;
-			return {
-				translate: roundNewTranslatePosition,
-				dragStartPosition:
-					dragStartPosition - elementHeight * direction + roundDelta
-			};
-		});
+				return {
+					translate: roundNewTranslatePosition,
+					dragStartPosition:
+						dragStartPosition -
+						elementHeight * direction +
+						roundDelta,
+					animationSettings: {}
+				};
+			})
+		);
 	}
 }
 
