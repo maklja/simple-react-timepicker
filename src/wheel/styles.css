@@ -31,6 +31,11 @@
   /* color: red; */
 }
 
+.wheel-picker .value.inactive {
+  opacity: 0.7;
+  color: red;
+}
+
 .button {
     text-align: center;
     padding: 2px 0;
@@ -57,10 +62,9 @@
 
 .arrow.up {
     transform: rotate(-135deg);
-    margin-top: 6px;
 }
 
 .arrow.down {
     transform: rotate(45deg);
-    margin-bottom: 6px;
+    margin-top: 4px;
 }
