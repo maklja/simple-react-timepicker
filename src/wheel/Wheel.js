@@ -59,6 +59,7 @@ Wheel.defaultProps = {
 	offsetHeight: 0
 };
 
+// TODO extract to configuration
 const springSetting1 = { stiffness: 390, damping: 17 };
 const createAnimationSettings = translateY => {
 	return {

@@ -1,21 +1,25 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const holdButtonDownClickDelay = 150; // ms
+import { infinitiveInvoke } from '../utils/helper';
 
 export const DIRECTION = {
 	UP: 1,
 	DOWN: -1
 };
 
+const SPACEBAR = ' ';
+
 export default class DefaultButton extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = { buttonPressed: false };
+		this._cancelPress = null;
 
 		this._onMouseDown = this._onMouseDown.bind(this);
-		this._stopMouseClick = this._stopMouseClick.bind(this);
+		this._clearPressedDelay = this._clearPressedDelay.bind(this);
+		this._onKeyDown = this._onKeyDown.bind(this);
 	}
 
 	render() {
@@ -24,15 +28,32 @@ export default class DefaultButton extends React.Component {
 		const visibilityClass = visible ? '' : 'hidden';
 
 		return (
-			<div
-				className={`button ${visibilityClass}`}
-				onMouseDown={this._onMouseDown}
-				onMouseUp={this._stopMouseClick}
-				onMouseLeave={this._stopMouseClick}
-			>
-				<div className={`arrow ${directionClass}`} />
+			<div className={`button ${visibilityClass}`}>
+				<div
+					tabIndex="0"
+					className="button-inner"
+					onKeyDown={this._onKeyDown}
+					onMouseDown={this._onMouseDown}
+					onMouseUp={this._clearPressedDelay}
+					onMouseLeave={this._clearPressedDelay}
+					onKeyUp={this._clearPressedDelay}
+				>
+					<div className={`arrow ${directionClass}`} />
+				</div>
 			</div>
 		);
+	}
+
+	_onKeyDown(e) {
+		// TODO move to configuration
+		if (e.key === 'Enter' || e.key === SPACEBAR) {
+			this.setState(
+				{
+					buttonPressed: true
+				},
+				() => this._pressedDelay()
+			);
+		}
 	}
 
 	_onMouseDown() {
@@ -40,31 +61,32 @@ export default class DefaultButton extends React.Component {
 			{
 				buttonPressed: true
 			},
-			() => this._mouseClickedDelay()
+			() => this._pressedDelay()
 		);
 	}
 
-	_stopMouseClick() {
+	_clearPressedDelay() {
 		this.setState(
 			{
 				buttonPressed: false
 			},
 			() => {
-				clearTimeout(this._mouseDownTimeout);
-				this._mouseDownTimeout = null;
+				if (this._cancelPress != null) {
+					this._cancelPress();
+					this._cancelPress = null;
+				}
 			}
 		);
 	}
 
-	_mouseClickedDelay() {
+	_pressedDelay() {
 		const { direction, onClick } = this.props;
 
-		onClick(direction);
-		this._mouseDownTimeout = setTimeout(() => {
-			if (this.state.buttonPressed) {
-				this._mouseClickedDelay();
-			}
-		}, holdButtonDownClickDelay);
+		this._cancelPress = infinitiveInvoke(
+			onClick,
+			() => this.state.buttonPressed,
+			direction
+		);
 	}
 }
 

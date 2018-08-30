@@ -4,18 +4,9 @@ import PropTypes from 'prop-types';
 import createWheel from './Wheel';
 import Button, { DIRECTION } from '../buttons/DefaultButton';
 
+import { arrayRotateOne } from '../utils/helper';
+
 import './styles.css';
-
-function arrayRotateOne(arr, reverse) {
-	const cloneArr = [...arr];
-	if (reverse) {
-		cloneArr.unshift(cloneArr.pop());
-	} else {
-		cloneArr.push(cloneArr.shift());
-	}
-
-	return cloneArr;
-}
 
 export default class WheelPicker extends React.Component {
 	constructor(props) {
@@ -58,6 +49,7 @@ export default class WheelPicker extends React.Component {
 		this._onMouseLeave = this._onMouseLeave.bind(this);
 		this._onWheel = this._onWheel.bind(this);
 		this._moveToNextValue = this._moveToNextValue.bind(this);
+		this._onKeyDown = this._onKeyDown.bind(this);
 	}
 
 	render() {
@@ -108,8 +100,10 @@ export default class WheelPicker extends React.Component {
 					visible={showButtons && dragStarted === false}
 				/>
 				<div
+					tabIndex="0"
 					ref={el => (this._wheelEl = el)}
 					className="wheel-picker"
+					onKeyDown={this._onKeyDown}
 					onMouseUp={this._onMouseUp}
 					onMouseLeave={this._onMouseLeave}
 					onWheel={this._onWheel}
@@ -165,6 +159,14 @@ export default class WheelPicker extends React.Component {
 					selectedIndex + Math.floor(valuesChildren.length / 3)
 			};
 		});
+	}
+
+	_onKeyDown(e) {
+		if (e.key === 'ArrowUp') {
+			this._moveToNextValue(DIRECTION.UP);
+		} else if (e.key === 'ArrowDown') {
+			this._moveToNextValue(DIRECTION.DOWN);
+		}
 	}
 
 	_onMouseMove(e) {
