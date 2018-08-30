@@ -94,7 +94,7 @@ export default class WheelPicker extends React.Component {
 			offsetHeight: offsetHeight
 		});
 		return (
-			<div className={chooseClass}>
+			<div className={`wheel-holder ${chooseClass}`}>
 				<Button
 					onClick={this._moveToNextValue}
 					visible={showButtons && dragStarted === false}

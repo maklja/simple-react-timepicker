@@ -31,7 +31,6 @@ export default class DefaultButton extends React.Component {
 			<div className={`button ${visibilityClass}`}>
 				<div
 					tabIndex="0"
-					className="button-inner"
 					onKeyDown={this._onKeyDown}
 					onMouseDown={this._onMouseDown}
 					onMouseUp={this._clearPressedDelay}

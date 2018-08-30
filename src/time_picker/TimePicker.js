@@ -39,18 +39,21 @@ export default class TimePicker extends React.Component {
 						valueFormater={timeFormater}
 					/>
 				</div>
+				<div className="cell split">:</div>
 				<div className="cell">
 					<WheelPicker
 						values={generateArrayValues(60, stepMinute)}
 						valueFormater={timeFormater}
 					/>
 				</div>
+				<div className="cell split">:</div>
 				<div className="cell">
 					<WheelPicker
 						values={generateArrayValues(60, stepSecond)}
 						valueFormater={timeFormater}
 					/>
 				</div>
+				<div className="cell split">:</div>
 				{use12Hours ? (
 					<div className="cell">
 						<WheelPicker
