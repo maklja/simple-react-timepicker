@@ -45,7 +45,12 @@ export default class WheelPicker extends React.Component {
 	}
 
 	render() {
-		const { valueFormater, enableAnimation, showButtons } = this.props;
+		const {
+			valueFormater,
+			enableAnimation,
+			showButtons,
+			disabled
+		} = this.props;
 		const {
 			translate,
 			chooseStarted,
@@ -70,6 +75,7 @@ export default class WheelPicker extends React.Component {
 			? elementHeight * chooseValuesNumber
 			: 0;
 		const chooseClass = chooseStarted ? 'choose-started' : '';
+		const disabledClass = disabled ? 'disabled' : '';
 
 		const translateY = translate + activeDelta;
 		// if animation is enabled and if draging didn't started
@@ -95,8 +101,9 @@ export default class WheelPicker extends React.Component {
 			chooseStarted: chooseStarted
 		});
 		return (
-			<div className={`wheel-holder ${chooseClass}`}>
+			<div className={`wheel-holder ${chooseClass} ${disabledClass}`}>
 				<Button
+					disabled={disabled}
 					onClick={this._moveToNextValue}
 					visible={showButtons && dragStarted === false}
 				/>
@@ -105,7 +112,7 @@ export default class WheelPicker extends React.Component {
 						maxHeight: `${elementHeight}px`,
 						height: `${elementHeight}px`
 					}}
-					tabIndex="0"
+					tabIndex={disabled ? '' : '0'}
 					className="wheel-picker"
 					onKeyDown={this._onKeyDown}
 					onMouseUp={this._onMouseUp}
@@ -123,6 +130,7 @@ export default class WheelPicker extends React.Component {
 					</div>
 				</div>
 				<Button
+					disabled={disabled}
 					direction={DIRECTION.DOWN}
 					onClick={this._moveToNextValue}
 					visible={showButtons && dragStarted === false}
@@ -170,6 +178,10 @@ export default class WheelPicker extends React.Component {
 	}
 
 	_onKeyDown(e) {
+		if (this._isDisabled()) {
+			return;
+		}
+
 		if (e.key === 'ArrowUp') {
 			this._moveToNextValue(DIRECTION.UP);
 		} else if (e.key === 'ArrowDown') {
@@ -178,6 +190,10 @@ export default class WheelPicker extends React.Component {
 	}
 
 	_onMouseMove(e) {
+		if (this._isDisabled()) {
+			return;
+		}
+
 		if (this._isDragStarted() === false) {
 			return;
 		}
@@ -186,6 +202,10 @@ export default class WheelPicker extends React.Component {
 	}
 
 	_onMouseDown(e) {
+		if (this._isDisabled()) {
+			return;
+		}
+
 		// if left click
 		// TODO move to configuration
 		if (e.button !== 0) {
@@ -239,6 +259,10 @@ export default class WheelPicker extends React.Component {
 
 	// event is triggered on mouse wheel
 	_onWheel(e) {
+		if (this._isDisabled()) {
+			return;
+		}
+
 		// direction of scrolling
 		const direction = Math.sign(e.deltaY);
 		this._moveToNextValue(direction);
@@ -342,6 +366,10 @@ export default class WheelPicker extends React.Component {
 			Math.round(valuesCopy.length / 2)
 		);
 	}
+
+	_isDisabled() {
+		return this.props.disabled;
+	}
 }
 
 WheelPicker.propTypes = {
@@ -352,7 +380,8 @@ WheelPicker.propTypes = {
 	chooseValuesNumber: PropTypes.number,
 	valueFormater: PropTypes.func,
 	showButtons: PropTypes.bool,
-	enableAnimation: PropTypes.bool
+	enableAnimation: PropTypes.bool,
+	disabled: PropTypes.bool
 };
 
 WheelPicker.defaultProps = {
@@ -360,5 +389,6 @@ WheelPicker.defaultProps = {
 	chooseValuesNumber: 4,
 	valueFormater: val => val,
 	showButtons: true,
-	enableAnimation: true
+	enableAnimation: true,
+	disabled: false
 };

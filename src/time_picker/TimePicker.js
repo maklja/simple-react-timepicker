@@ -34,7 +34,11 @@ export default class TimePicker extends React.Component {
 			showHour,
 			showMinutes,
 			showSeconds,
-			showMilliseconds
+			showMilliseconds,
+			disableHour,
+			disableMinutes,
+			disableSeconds,
+			disableMilliseconds
 		} = this.props;
 
 		return (
@@ -48,6 +52,7 @@ export default class TimePicker extends React.Component {
 								use12Hours ? 1 : 0
 							)}
 							valueFormater={timeFormater}
+							disabled={disableHour}
 						/>
 					</div>
 				) : (
@@ -60,6 +65,7 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							values={generateArrayValues(60, stepMinute)}
 							valueFormater={timeFormater}
+							disable={disableMinutes}
 						/>
 					</div>
 				) : (
@@ -72,6 +78,7 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							values={generateArrayValues(60, stepSecond)}
 							valueFormater={timeFormater}
+							disabled={disableSeconds}
 						/>
 					</div>
 				) : (
@@ -84,6 +91,7 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							values={generateArrayValues(1000, stepMilliseconds)}
 							valueFormater={timeFormater}
+							disabled={disableMilliseconds}
 						/>
 					</div>
 				) : (
@@ -95,6 +103,7 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							values={meridiems}
 							valueFormater={timeFormater}
+							disabled={disableHour}
 						/>
 					</div>
 				) : (
@@ -114,7 +123,11 @@ TimePicker.propTypes = {
 	showHour: PropTypes.bool,
 	showMinutes: PropTypes.bool,
 	showSeconds: PropTypes.bool,
-	showMilliseconds: PropTypes.bool
+	showMilliseconds: PropTypes.bool,
+	disableHour: PropTypes.bool,
+	disableMinutes: PropTypes.bool,
+	disableSeconds: PropTypes.bool,
+	disableMilliseconds: PropTypes.bool
 };
 
 TimePicker.defaultProps = {
@@ -126,5 +139,9 @@ TimePicker.defaultProps = {
 	showHour: true,
 	showMinutes: true,
 	showSeconds: true,
-	showMilliseconds: false
+	showMilliseconds: false,
+	disableHour: true,
+	disableMinutes: false,
+	disableSeconds: false,
+	disableMilliseconds: false
 };

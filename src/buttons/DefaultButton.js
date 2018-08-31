@@ -25,14 +25,15 @@ export default class DefaultButton extends React.Component {
 	}
 
 	render() {
-		const { direction, visible } = this.props;
+		const { direction, visible, disabled } = this.props;
 		const directionClass = direction === DIRECTION.UP ? 'up' : 'down';
+		const disabledClass = disabled ? 'disabled' : '';
 		const visibilityClass = visible ? '' : 'hidden';
 
 		return (
-			<div className={`button ${visibilityClass}`}>
+			<div className={`button ${visibilityClass} ${disabledClass}`}>
 				<div
-					tabIndex="0"
+					tabIndex={disabled ? '' : '0'}
 					onKeyDown={this._onKeyDown}
 					onMouseDown={this._onMouseDown}
 					onMouseUp={this._clearPressedDelay}
@@ -46,6 +47,10 @@ export default class DefaultButton extends React.Component {
 	}
 
 	_onKeyDown(e) {
+		if (this.isDisabled()) {
+			return;
+		}
+
 		// TODO move to configuration
 		if (e.key === 'Enter' || e.key === SPACEBAR) {
 			this.setState(
@@ -58,6 +63,10 @@ export default class DefaultButton extends React.Component {
 	}
 
 	_onMouseDown() {
+		if (this.isDisabled()) {
+			return;
+		}
+
 		this.setState(
 			{
 				buttonPressed: true
@@ -67,6 +76,10 @@ export default class DefaultButton extends React.Component {
 	}
 
 	_clearPressedDelay() {
+		if (this.isDisabled()) {
+			return;
+		}
+
 		this.setState(
 			{
 				buttonPressed: false
@@ -89,16 +102,22 @@ export default class DefaultButton extends React.Component {
 			direction
 		);
 	}
+
+	isDisabled() {
+		return this.props.disabled;
+	}
 }
 
 DefaultButton.propTypes = {
 	direction: PropTypes.oneOf([DIRECTION.DOWN, DIRECTION.UP]),
 	visible: PropTypes.bool,
-	onClick: PropTypes.func
+	onClick: PropTypes.func,
+	disabled: PropTypes.bool
 };
 
 DefaultButton.defaultProps = {
 	direction: DIRECTION.UP,
 	visible: true,
-	onClick: () => {}
+	onClick: () => {},
+	disabled: false
 };
