@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import createWheel from './Wheel';
 import Button, { DIRECTION } from '../buttons/DefaultButton';
 
-import { arrayRotateOne } from '../utils/helper';
+import { arrayRotateOne, isFunction } from '../utils/helper';
 
 import './styles.css';
 
@@ -14,12 +14,44 @@ export default class WheelPicker extends React.Component {
 
 		const { values, chooseValuesNumber, selectedIndex } = props;
 
-		// TODO optimaze
-		let expandedValues = [];
-		const n = values.length * 3;
-		while (expandedValues.length < n) {
-			expandedValues = expandedValues.concat(values);
+		// let minValues = [];
+		// values.reverse();
+		// for (
+		// 	let i = 0;
+		// 	i < Math.min(chooseValuesNumber * 2, values.length);
+		// 	i++
+		// ) {
+		// 	minValues.push(values[i]);
+		// }
+		// values.reverse();
+		// minValues = minValues.reverse();
+		// for (
+		// 	let i = 0;
+		// 	i < Math.min(chooseValuesNumber * 2, values.length);
+		// 	i++
+		// ) {
+		// 	minValues.push(values[i]);
+		// }
+
+		// console.log(minValues);
+
+		// if (isFunction(values)) {
+		// 	let nextValue = values(null, null),
+		// 		vals = [];
+
+		// 	for (let i = 0; i < chooseValuesNumber * 2; i++) {
+		// 		vals.push(nextValue);
+		// 		nextValue = values(nextValue, DIRECTION.DOWN);
+		// 	}
+		// }
+
+		let expandedValues = [...values];
+		while (expandedValues.length <= chooseValuesNumber) {
+			expandedValues = expandedValues.concat(expandedValues);
 		}
+		expandedValues = expandedValues
+			.concat(expandedValues)
+			.concat(expandedValues);
 
 		this.state = {
 			dragStarted: false,
@@ -27,10 +59,7 @@ export default class WheelPicker extends React.Component {
 			dragStartPosition: 0,
 			chooseStarted: false,
 			elementHeight: 0,
-			chooseValuesNumber: Math.min(
-				chooseValuesNumber,
-				Math.floor(values.length / 2)
-			),
+			chooseValuesNumber,
 			values: expandedValues,
 			offsetHeight: 0,
 			// this state is used while draging wheel i drag started mode
@@ -40,7 +69,8 @@ export default class WheelPicker extends React.Component {
 			// and ability to calculate currently selected value
 			dragCrossed: 0,
 			// set currently selected value
-			selectedIndex
+			selectedIndex,
+			nextValue: 0
 		};
 
 		this._onMouseDown = this._onMouseDown.bind(this);
@@ -145,18 +175,22 @@ export default class WheelPicker extends React.Component {
 			(accumulator, curEl) => accumulator + curEl.offsetHeight,
 			0
 		);
-		// calculate single element height
-		const elementHeight = valuesElementsSize / valuesChildren.length;
-		const startPosition = (valuesElementsSize * -1) / 3;
 
-		this.setState(prevState => {
-			const { selectedIndex } = prevState;
+		this.setState((prevState, props) => {
+			const { selectedIndex, values } = prevState;
+			const originalValuesNumber = props.values.length;
+
+			const n = values.length / originalValuesNumber;
+			// calculate single element height
+			const elementHeight = valuesElementsSize / valuesChildren.length;
+			const startPosition =
+				(Math.floor(n / 2) * valuesElementsSize * -1) / n;
 
 			return {
 				translate: startPosition - selectedIndex * elementHeight,
 				elementHeight,
 				selectedIndex:
-					selectedIndex + Math.floor(valuesChildren.length / 3)
+					selectedIndex + Math.abs(startPosition / elementHeight)
 			};
 		});
 	}
@@ -280,7 +314,7 @@ export default class WheelPicker extends React.Component {
 
 	_moveToNextValue(direction) {
 		this.setState(prevState => {
-			const { translate, elementHeight, values } = prevState;
+			const { translate, elementHeight, values, nextValue } = prevState;
 
 			const newValues = arrayRotateOne(values, direction > 0);
 
@@ -288,7 +322,8 @@ export default class WheelPicker extends React.Component {
 				translate: translate + elementHeight * direction,
 				values: newValues,
 				offsetHeight:
-					prevState.offsetHeight + elementHeight * direction * -1
+					prevState.offsetHeight + elementHeight * direction * -1,
+				nextValue: nextValue + direction
 			};
 		});
 	}
@@ -314,9 +349,12 @@ export default class WheelPicker extends React.Component {
 }
 
 WheelPicker.propTypes = {
-	values: PropTypes.arrayOf(
-		PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-	).isRequired,
+	values: PropTypes.oneOfType([
+		PropTypes.func,
+		PropTypes.arrayOf(
+			PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+		)
+	]).isRequired,
 	selectedIndex: PropTypes.number,
 	chooseValuesNumber: PropTypes.number,
 	valueFormater: PropTypes.func,
