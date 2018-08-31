@@ -14,7 +14,9 @@ export default class DefaultButton extends React.Component {
 	constructor(props) {
 		super(props);
 
-		this.state = { buttonPressed: false };
+		this.state = {
+			buttonPressed: false
+		};
 		this._cancelPress = null;
 
 		this._onMouseDown = this._onMouseDown.bind(this);

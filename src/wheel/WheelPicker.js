@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import createWheel from './Wheel';
 import Button, { DIRECTION } from '../buttons/DefaultButton';
 
-import { arrayRotateOne, isFunction } from '../utils/helper';
+import { arrayRotate } from '../utils/helper';
 
 import './styles.css';
 
@@ -14,44 +14,7 @@ export default class WheelPicker extends React.Component {
 
 		const { values, chooseValuesNumber, selectedIndex } = props;
 
-		// let minValues = [];
-		// values.reverse();
-		// for (
-		// 	let i = 0;
-		// 	i < Math.min(chooseValuesNumber * 2, values.length);
-		// 	i++
-		// ) {
-		// 	minValues.push(values[i]);
-		// }
-		// values.reverse();
-		// minValues = minValues.reverse();
-		// for (
-		// 	let i = 0;
-		// 	i < Math.min(chooseValuesNumber * 2, values.length);
-		// 	i++
-		// ) {
-		// 	minValues.push(values[i]);
-		// }
-
-		// console.log(minValues);
-
-		// if (isFunction(values)) {
-		// 	let nextValue = values(null, null),
-		// 		vals = [];
-
-		// 	for (let i = 0; i < chooseValuesNumber * 2; i++) {
-		// 		vals.push(nextValue);
-		// 		nextValue = values(nextValue, DIRECTION.DOWN);
-		// 	}
-		// }
-
-		let expandedValues = [...values];
-		while (expandedValues.length <= chooseValuesNumber) {
-			expandedValues = expandedValues.concat(expandedValues);
-		}
-		expandedValues = expandedValues
-			.concat(expandedValues)
-			.concat(expandedValues);
+		let expandedValues = this._extendValues(values, chooseValuesNumber);
 
 		this.state = {
 			dragStarted: false,
@@ -69,8 +32,7 @@ export default class WheelPicker extends React.Component {
 			// and ability to calculate currently selected value
 			dragCrossed: 0,
 			// set currently selected value
-			selectedIndex,
-			nextValue: 0
+			selectedIndex
 		};
 
 		this._onMouseDown = this._onMouseDown.bind(this);
@@ -107,21 +69,30 @@ export default class WheelPicker extends React.Component {
 		const activeDelta = chooseStarted
 			? elementHeight * chooseValuesNumber
 			: 0;
-
 		const chooseClass = chooseStarted ? 'choose-started' : '';
+
 		const translateY = translate + activeDelta;
 		// if animation is enabled and if draging didn't started
 		const animation = enableAnimation && dragStarted === false;
 
+		const middleValueIndex = Math.round(values.length / 2);
+		const beginIndex = middleValueIndex - chooseValuesNumber * 2;
+		const endIndex = middleValueIndex + chooseValuesNumber * 2;
+		const visibleValues = values.slice(
+			beginIndex < 0 ? 0 : beginIndex,
+			endIndex
+		);
+
 		const Wheel = createWheel(animation, {
-			values: values,
+			values: visibleValues,
 			onElementCreated: el => (this._valuePickerEl = el),
 			onMouseDown: this._onMouseDown,
 			onMouseMove: this._onMouseMove,
 			selectedIndex: this._getHighlightedIndex(),
 			valueFormater: valueFormater,
 			translateY: translateY,
-			offsetHeight: offsetHeight
+			offsetHeight: offsetHeight,
+			chooseStarted: chooseStarted
 		});
 		return (
 			<div className={`wheel-holder ${chooseClass}`}>
@@ -130,17 +101,16 @@ export default class WheelPicker extends React.Component {
 					visible={showButtons && dragStarted === false}
 				/>
 				<div
+					style={{
+						maxHeight: `${elementHeight}px`,
+						height: `${elementHeight}px`
+					}}
 					tabIndex="0"
-					ref={el => (this._wheelEl = el)}
 					className="wheel-picker"
 					onKeyDown={this._onKeyDown}
 					onMouseUp={this._onMouseUp}
 					onMouseLeave={this._onMouseLeave}
 					onWheel={this._onWheel}
-					style={{
-						maxHeight: `${elementHeight}px`,
-						height: `${elementHeight}px`
-					}}
 				>
 					<div
 						className="current-value"
@@ -176,15 +146,15 @@ export default class WheelPicker extends React.Component {
 			0
 		);
 
-		this.setState((prevState, props) => {
-			const { selectedIndex, values } = prevState;
-			const originalValuesNumber = props.values.length;
+		this.setState(prevState => {
+			const { selectedIndex } = prevState;
 
-			const n = values.length / originalValuesNumber;
 			// calculate single element height
 			const elementHeight = valuesElementsSize / valuesChildren.length;
-			const startPosition =
-				(Math.floor(n / 2) * valuesElementsSize * -1) / n;
+			const startPosition = this._translateRoundPosition(
+				-valuesElementsSize / 2,
+				elementHeight
+			);
 
 			return {
 				translate: startPosition - selectedIndex * elementHeight,
@@ -193,6 +163,10 @@ export default class WheelPicker extends React.Component {
 					selectedIndex + Math.abs(startPosition / elementHeight)
 			};
 		});
+	}
+
+	componentWillUnmount() {
+		this._valuePickerEl = null;
 	}
 
 	_onKeyDown(e) {
@@ -296,7 +270,7 @@ export default class WheelPicker extends React.Component {
 			if (Math.abs(dragCrossed) > elementHeight / 2) {
 				const direction = Math.sign(dragCrossed);
 
-				newValues = arrayRotateOne(values, direction > 0);
+				newValues = arrayRotate(values, direction > 0);
 				dragCrossed = dragCrossed - elementHeight * direction;
 				offsetHeight =
 					prevState.offsetHeight + elementHeight * direction * -1;
@@ -316,7 +290,7 @@ export default class WheelPicker extends React.Component {
 		this.setState(prevState => {
 			const { translate, elementHeight, values, nextValue } = prevState;
 
-			const newValues = arrayRotateOne(values, direction > 0);
+			const newValues = arrayRotate(values, direction > 0);
 
 			return {
 				translate: translate + elementHeight * direction,
@@ -336,6 +310,8 @@ export default class WheelPicker extends React.Component {
 			elementHeight
 		} = this.state;
 
+		// if we passed half of the current element during dragin we need to select
+		// neighbor one, which one will be selected depends on direction of draging
 		if (dragStarted && Math.abs(dragCrossed) >= elementHeight / 2) {
 			if (dragCrossed < -1) {
 				return selectedIndex + 1;
@@ -346,15 +322,32 @@ export default class WheelPicker extends React.Component {
 
 		return selectedIndex;
 	}
+
+	_extendValues(values, maxValuesNumber) {
+		// create copy of the current values
+		let valuesCopy = [...values];
+		// maxValues number represent number of visible elements during selection mode
+		// if array doesn't have enough elements we need to clone them multiple times in
+		// order to satisfy maxValuesNumber condition
+		if (valuesCopy.length < maxValuesNumber) {
+			while (valuesCopy.length <= maxValuesNumber * 2) {
+				valuesCopy = valuesCopy.concat(valuesCopy);
+			}
+		}
+
+		// rotate elements in the array so the first element is in the center of the array
+		return arrayRotate(
+			valuesCopy,
+			false,
+			Math.round(valuesCopy.length / 2)
+		);
+	}
 }
 
 WheelPicker.propTypes = {
-	values: PropTypes.oneOfType([
-		PropTypes.func,
-		PropTypes.arrayOf(
-			PropTypes.oneOfType([PropTypes.number, PropTypes.string])
-		)
-	]).isRequired,
+	values: PropTypes.arrayOf(
+		PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+	).isRequired,
 	selectedIndex: PropTypes.number,
 	chooseValuesNumber: PropTypes.number,
 	valueFormater: PropTypes.func,

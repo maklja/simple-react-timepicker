@@ -29,6 +29,7 @@
 .choose-started .wheel-picker {
 	width: 200%;
 	margin-left: -50%;
+	z-index: 10;
 }
 
 .choose-started .wheel-picker .current-value {
@@ -36,7 +37,7 @@
 }
 
 .wheel-picker .value {
-	padding: 5px 0;
+	padding: 3px 0;
 	letter-spacing: 1px;
 	border-top: 1px solid transparent;
 	text-align: center;

@@ -37,5 +37,9 @@
         "media-feature-name-no-vendor-prefix": true,
         "media-feature-colon-space-before": "never",
         "media-feature-colon-space-after": "always"
-    }
+    },
+    "ignoreFiles": [
+        "**/*.js",
+        "**/*.jsx"
+    ]
 }

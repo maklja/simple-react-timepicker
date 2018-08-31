@@ -2,11 +2,11 @@ export const infinitiveInvoke = (
 	callback,
 	conditionCallback,
 	args,
-	delay = 150
+	delay = 250
 ) => {
 	let timeoutId = null;
 
-	const autoInvoke = (callback, conditionCallback, args, delay = 150) => {
+	const autoInvoke = (callback, conditionCallback, args, delay) => {
 		callback(args);
 
 		timeoutId = setTimeout(() => {
@@ -23,12 +23,17 @@ export const infinitiveInvoke = (
 	};
 };
 
-export const arrayRotateOne = (arr, reverse) => {
+export const arrayRotate = (arr, reverse, shiftNum = 1) => {
 	const cloneArr = [...arr];
+
 	if (reverse) {
-		cloneArr.unshift(cloneArr.pop());
+		for (let i = 0; i < shiftNum; i++) {
+			cloneArr.unshift(cloneArr.pop());
+		}
 	} else {
-		cloneArr.push(cloneArr.shift());
+		for (let i = 0; i < shiftNum; i++) {
+			cloneArr.push(cloneArr.shift());
+		}
 	}
 
 	return cloneArr;
