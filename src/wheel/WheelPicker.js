@@ -14,7 +14,11 @@ export default class WheelPicker extends React.Component {
 
 		const { values, chooseValuesNumber, selectedIndex } = props;
 
-		let expandedValues = this._extendValues(values, chooseValuesNumber);
+		let expandedValues = this._extendValues(
+			values,
+			chooseValuesNumber,
+			selectedIndex
+		);
 
 		this.state = {
 			dragStarted: false,
@@ -154,22 +158,17 @@ export default class WheelPicker extends React.Component {
 			0
 		);
 
-		this.setState(prevState => {
-			const { selectedIndex } = prevState;
+		// calculate single element height
+		const elementHeight = valuesElementsSize / valuesChildren.length;
+		const startPosition = this._translateRoundPosition(
+			-valuesElementsSize / 2,
+			elementHeight
+		);
 
-			// calculate single element height
-			const elementHeight = valuesElementsSize / valuesChildren.length;
-			const startPosition = this._translateRoundPosition(
-				-valuesElementsSize / 2,
-				elementHeight
-			);
-
-			return {
-				translate: startPosition - selectedIndex * elementHeight,
-				elementHeight,
-				selectedIndex:
-					selectedIndex + Math.abs(startPosition / elementHeight)
-			};
+		this.setState({
+			translate: startPosition,
+			elementHeight,
+			selectedIndex: Math.abs(startPosition / elementHeight)
 		});
 	}
 
@@ -254,7 +253,7 @@ export default class WheelPicker extends React.Component {
 				),
 				dragCrossed: 0
 			};
-		});
+		}, this._onValueChanged);
 	}
 
 	// event is triggered on mouse wheel
@@ -323,7 +322,7 @@ export default class WheelPicker extends React.Component {
 					prevState.offsetHeight + elementHeight * direction * -1,
 				nextValue: nextValue + direction
 			};
-		});
+		}, this._onValueChanged);
 	}
 
 	_getHighlightedIndex() {
@@ -347,9 +346,12 @@ export default class WheelPicker extends React.Component {
 		return selectedIndex;
 	}
 
-	_extendValues(values, maxValuesNumber) {
+	_extendValues(values, maxValuesNumber, selectedIndex) {
 		// create copy of the current values
 		let valuesCopy = [...values];
+
+		valuesCopy = arrayRotate(valuesCopy, false, selectedIndex);
+
 		// maxValues number represent number of visible elements during selection mode
 		// if array doesn't have enough elements we need to clone them multiple times in
 		// order to satisfy maxValuesNumber condition
@@ -367,12 +369,24 @@ export default class WheelPicker extends React.Component {
 		);
 	}
 
+	// called every time value on the wheel changes
+	_onValueChanged() {
+		const { values } = this.state;
+		const { onChange, name } = this.props;
+
+		// middle element is always selected one
+		const selectedValueIndex = Math.round(values.length / 2);
+
+		onChange(values[selectedValueIndex], name);
+	}
+
 	_isDisabled() {
 		return this.props.disabled;
 	}
 }
 
 WheelPicker.propTypes = {
+	name: PropTypes.string,
 	values: PropTypes.arrayOf(
 		PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 	).isRequired,
@@ -381,14 +395,17 @@ WheelPicker.propTypes = {
 	valueFormater: PropTypes.func,
 	showButtons: PropTypes.bool,
 	enableAnimation: PropTypes.bool,
-	disabled: PropTypes.bool
+	disabled: PropTypes.bool,
+	onChange: PropTypes.func
 };
 
 WheelPicker.defaultProps = {
+	name: '',
 	selectedIndex: 0,
 	chooseValuesNumber: 4,
 	valueFormater: val => val,
 	showButtons: true,
 	enableAnimation: true,
-	disabled: false
+	disabled: false,
+	onChange: () => {}
 };

@@ -38,3 +38,21 @@ export const arrayRotate = (arr, reverse, shiftNum = 1) => {
 
 	return cloneArr;
 };
+
+export const generateArrayValues = (maxValue, step, startValue = 0) => {
+	const values = [];
+	for (let i = startValue; i < maxValue; i += step) {
+		values.push(i);
+	}
+
+	return values;
+};
+
+export const timeFormater = val => {
+	let s = val + '';
+	while (s.length < 2) {
+		s = '0' + s;
+	}
+
+	return s;
+};
