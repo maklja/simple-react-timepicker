@@ -1,12 +1,39 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import createWheel from './Wheel';
+import { AnimationWheel, Wheel } from './Wheel';
 import Button, { DIRECTION } from '../buttons/DefaultButton';
 
 import { arrayRotate } from '../utils/helper';
 
 import './styles.css';
+
+const getWindowSize = () => {
+	let width = 0,
+		height = 0;
+	if (typeof window.innerWidth == 'number') {
+		// Non-IE
+		width = window.innerWidth;
+		height = window.innerHeight;
+	} else if (
+		document.documentElement &&
+		(document.documentElement.clientWidth ||
+			document.documentElement.clientHeight)
+	) {
+		// IE 6+ in 'standards compliant mode'
+		width = document.documentElement.clientWidth;
+		height = document.documentElement.clientHeight;
+	} else if (
+		document.body &&
+		(document.body.clientWidth || document.body.clientHeight)
+	) {
+		// IE 4 compatible
+		width = document.body.clientWidth;
+		height = document.body.clientHeight;
+	}
+
+	return { width, height };
+};
 
 export default class WheelPicker extends React.Component {
 	constructor(props) {
@@ -36,7 +63,7 @@ export default class WheelPicker extends React.Component {
 			// and ability to calculate currently selected value
 			dragCrossed: 0,
 			// set currently selected value
-			selectedIndex
+			selectedIndex: null
 		};
 
 		this._onMouseDown = this._onMouseDown.bind(this);
@@ -67,12 +94,7 @@ export default class WheelPicker extends React.Component {
 
 		// is component is in  choose mode we need to calculate the view port so the user can
 		// see more vvalues from the wheel
-		const chooseStyle = chooseStarted
-			? {
-					height: `${elementHeight * (2 * chooseValuesNumber + 1)}px`,
-					marginTop: `-${elementHeight * chooseValuesNumber}px`
-			  }
-			: {};
+		const chooseStyle = chooseStarted ? this._getChooseStyle() : {};
 		// if choose started we need to translate whole view port up so the selectet value
 		// stays in the middle while active values are visible around it
 		const activeDelta = chooseStarted
@@ -93,19 +115,11 @@ export default class WheelPicker extends React.Component {
 			endIndex
 		);
 
-		const Wheel = createWheel(animation, {
-			values: visibleValues,
-			onElementCreated: el => (this._valuePickerEl = el),
-			onMouseDown: this._onMouseDown,
-			onMouseMove: this._onMouseMove,
-			selectedIndex: this._getHighlightedIndex(),
-			valueFormater: valueFormater,
-			translateY: translateY,
-			offsetHeight: offsetHeight,
-			chooseStarted: chooseStarted
-		});
 		return (
-			<div className={`wheel-holder ${chooseClass} ${disabledClass}`}>
+			<div
+				ref={el => (this._el = el)}
+				className={`wheel-holder ${chooseClass} ${disabledClass}`}
+			>
 				<Button
 					disabled={disabled}
 					onClick={this._moveToNextValue}
@@ -130,7 +144,35 @@ export default class WheelPicker extends React.Component {
 							...chooseStyle
 						}}
 					>
-						{Wheel}
+						{animation ? (
+							<AnimationWheel
+								values={visibleValues}
+								onElementCreated={el =>
+									(this._valuePickerEl = el)
+								}
+								onMouseDown={this._onMouseDown}
+								onMouseMove={this._onMouseMove}
+								selectedIndex={this._getHighlightedIndex()}
+								valueFormater={valueFormater}
+								translateY={translateY}
+								offsetHeight={offsetHeight}
+								chooseStarted={chooseStarted}
+							/>
+						) : (
+							<Wheel
+								values={visibleValues}
+								onElementCreated={el =>
+									(this._valuePickerEl = el)
+								}
+								onMouseDown={this._onMouseDown}
+								onMouseMove={this._onMouseMove}
+								selectedIndex={this._getHighlightedIndex()}
+								valueFormater={valueFormater}
+								translateY={translateY}
+								offsetHeight={offsetHeight}
+								chooseStarted={chooseStarted}
+							/>
+						)}
 					</div>
 				</div>
 				<Button
@@ -213,10 +255,24 @@ export default class WheelPicker extends React.Component {
 
 		const position = e.pageY;
 
+		const { chooseValuesNumber } = this.props;
+		const { selectedIndex } = this.state;
+		const { maxSpaceTop, maxSpaceBottom } = this._getAvailableSpace();
+
+		let newSelectedIndex = selectedIndex;
+		if (maxSpaceBottom !== chooseValuesNumber) {
+			this._moveToNextValue(1, chooseValuesNumber - maxSpaceBottom);
+			newSelectedIndex += chooseValuesNumber - 1;
+		} else if (maxSpaceTop !== chooseValuesNumber) {
+			this._moveToNextValue(-1, chooseValuesNumber - maxSpaceTop);
+			newSelectedIndex -= chooseValuesNumber;
+		}
+
 		this.setState({
 			dragStarted: true,
 			dragStartPosition: position,
-			chooseStarted: true
+			chooseStarted: true,
+			selectedIndex: newSelectedIndex
 		});
 	}
 
@@ -231,6 +287,19 @@ export default class WheelPicker extends React.Component {
 	_dragStop() {
 		if (this._isDragStarted() === false) {
 			return;
+		}
+
+		const { chooseValuesNumber } = this.props;
+		const { maxSpaceTop, maxSpaceBottom } = this._getAvailableSpace();
+		const { selectedIndex } = this.state;
+
+		let newSelectedIndex = selectedIndex;
+		if (maxSpaceBottom !== chooseValuesNumber) {
+			this._moveToNextValue(-1, chooseValuesNumber - maxSpaceBottom);
+			newSelectedIndex -= chooseValuesNumber - 1;
+		} else if (maxSpaceTop !== chooseValuesNumber) {
+			this._moveToNextValue(1, chooseValuesNumber - maxSpaceTop);
+			newSelectedIndex += chooseValuesNumber;
 		}
 
 		this.setState(prevState => {
@@ -251,7 +320,8 @@ export default class WheelPicker extends React.Component {
 					translate - dragCrossed,
 					elementHeight
 				),
-				dragCrossed: 0
+				dragCrossed: 0,
+				selectedIndex: newSelectedIndex
 			};
 		}, this._onValueChanged);
 	}
@@ -309,18 +379,18 @@ export default class WheelPicker extends React.Component {
 		});
 	}
 
-	_moveToNextValue(direction) {
+	_moveToNextValue(direction, n = 1) {
 		this.setState(prevState => {
 			const { translate, elementHeight, values, nextValue } = prevState;
 
-			const newValues = arrayRotate(values, direction > 0);
+			const newValues = arrayRotate(values, direction > 0, n);
 
 			return {
-				translate: translate + elementHeight * direction,
+				translate: translate + n * elementHeight * direction,
 				values: newValues,
 				offsetHeight:
-					prevState.offsetHeight + elementHeight * direction * -1,
-				nextValue: nextValue + direction
+					prevState.offsetHeight + n * elementHeight * direction * -1,
+				nextValue: nextValue + n * direction
 			};
 		}, this._onValueChanged);
 	}
@@ -382,6 +452,48 @@ export default class WheelPicker extends React.Component {
 
 	_isDisabled() {
 		return this.props.disabled;
+	}
+
+	// TODO document
+	_getAvailableSpace() {
+		const { elementHeight, chooseValuesNumber } = this.state;
+
+		const { top, bottom } = this._el.getBoundingClientRect();
+		const { height } = getWindowSize();
+
+		// calculate top available space
+		// calculate how many elements can fit before time picker
+		const maxSpaceTop = Math.min(
+			chooseValuesNumber,
+			Math.round(top / elementHeight)
+		);
+		const offsetTop = maxSpaceTop * elementHeight;
+
+		// calculate bottom available space
+		// calculate how many elements can fit after time picker
+		const maxSpaceBottom = Math.min(
+			chooseValuesNumber,
+			Math.round(Math.abs(height - bottom) / elementHeight)
+		);
+		const offsetBottom =
+			(chooseValuesNumber - maxSpaceBottom) * elementHeight * -1;
+
+		return {
+			maxSpaceTop,
+			maxSpaceBottom,
+			offsetTop,
+			offsetBottom
+		};
+	}
+
+	_getChooseStyle() {
+		const { elementHeight, chooseValuesNumber } = this.state;
+		const { offsetTop, offsetBottom } = this._getAvailableSpace();
+
+		return {
+			height: `${elementHeight * (2 * chooseValuesNumber + 1)}px`,
+			marginTop: `-${offsetTop - offsetBottom}px`
+		};
 	}
 }
 

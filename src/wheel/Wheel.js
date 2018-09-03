@@ -69,51 +69,39 @@ const createAnimationSettings = translateY => {
 	};
 };
 
-export const createWheel = (
-	useAnimation,
-	{
-		values,
-		selectedIndex,
-		onMouseDown,
-		onMouseMove,
-		onElementCreated,
-		valueFormater,
-		translateY,
-		offsetHeight
-	}
-) => {
-	if (useAnimation === true) {
-		const animationSettings = createAnimationSettings(translateY);
-		return (
-			<Motion style={animationSettings}>
-				{({ translateY }) => (
-					<Wheel
-						values={values}
-						onElementCreated={onElementCreated}
-						onMouseDown={onMouseDown}
-						onMouseMove={onMouseMove}
-						selectedIndex={selectedIndex}
-						valueFormater={valueFormater}
-						translateY={translateY}
-						offsetHeight={offsetHeight}
-					/>
-				)}
-			</Motion>
-		);
-	}
-
+export const AnimationWheel = ({
+	values,
+	selectedIndex,
+	onMouseDown,
+	onMouseMove,
+	onElementCreated,
+	valueFormater,
+	translateY,
+	offsetHeight
+}) => {
+	const animationSettings = createAnimationSettings(translateY);
 	return (
-		<Wheel
-			values={values}
-			onElementCreated={onElementCreated}
-			onMouseDown={onMouseDown}
-			onMouseMove={onMouseMove}
-			selectedIndex={selectedIndex}
-			valueFormater={valueFormater}
-			translateY={translateY}
-			offsetHeight={offsetHeight}
-		/>
+		<Motion style={animationSettings}>
+			{({ translateY }) => (
+				<Wheel
+					values={values}
+					onElementCreated={onElementCreated}
+					onMouseDown={onMouseDown}
+					onMouseMove={onMouseMove}
+					selectedIndex={selectedIndex}
+					valueFormater={valueFormater}
+					translateY={translateY}
+					offsetHeight={offsetHeight}
+				/>
+			)}
+		</Motion>
 	);
 };
 
-export default createWheel;
+AnimationWheel.propTypes = {
+	...Wheel.propTypes
+};
+
+AnimationWheel.defaultProps = {
+	...Wheel.defaultProps
+};

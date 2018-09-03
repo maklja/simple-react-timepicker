@@ -84,12 +84,12 @@
 	transition: border-color 0.2s ease-in-out;
 }
 
-.button:not(.disabled):hover .arrow {
-	border-color: orange;
-}
-
 .button.disabled .arrow {
 	border-color: gray;
+}
+
+.button:not( .disabled ):hover .arrow {
+	border-color: orange;
 }
 
 .arrow.up {
