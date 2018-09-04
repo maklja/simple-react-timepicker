@@ -9,7 +9,7 @@ export const Wheel = ({
 	onMouseMove,
 	onElementCreated,
 	valueFormater,
-	translateY,
+	translate,
 	offsetHeight
 }) => {
 	return (
@@ -18,7 +18,7 @@ export const Wheel = ({
 			onMouseMove={onMouseMove}
 			ref={onElementCreated}
 			style={{
-				transform: `translateY(${translateY}px)`
+				transform: `translateY(${translate}px)`
 			}}
 		>
 			<div className="offset-div" style={{ marginTop: offsetHeight }} />
@@ -45,7 +45,7 @@ Wheel.propTypes = {
 	onMouseDown: PropTypes.func,
 	onMouseMove: PropTypes.func,
 	onElementCreated: PropTypes.func,
-	translateY: PropTypes.number,
+	translate: PropTypes.number,
 	offsetHeight: PropTypes.number
 };
 
@@ -55,7 +55,7 @@ Wheel.defaultProps = {
 	onMouseDown: () => {},
 	onMouseMove: () => {},
 	onElementCreated: () => {},
-	translateY: 0,
+	translate: 0,
 	offsetHeight: 0
 };
 
@@ -76,10 +76,10 @@ export const AnimationWheel = ({
 	onMouseMove,
 	onElementCreated,
 	valueFormater,
-	translateY,
+	translate,
 	offsetHeight
 }) => {
-	const animationSettings = createAnimationSettings(translateY);
+	const animationSettings = createAnimationSettings(translate);
 	return (
 		<Motion style={animationSettings}>
 			{({ translateY }) => (
@@ -90,7 +90,7 @@ export const AnimationWheel = ({
 					onMouseMove={onMouseMove}
 					selectedIndex={selectedIndex}
 					valueFormater={valueFormater}
-					translateY={translateY}
+					translate={translateY}
 					offsetHeight={offsetHeight}
 				/>
 			)}
@@ -104,4 +104,94 @@ AnimationWheel.propTypes = {
 
 AnimationWheel.defaultProps = {
 	...Wheel.defaultProps
+};
+
+export const WheelPickerBody = ({
+	values,
+	selectedIndex,
+	valueFormater,
+	onMouseDown,
+	onMouseMove,
+	onMouseUp,
+	onMouseLeave,
+	onWheel,
+	onElementCreated,
+	translate,
+	offsetHeight,
+	elementHeight,
+	disabled,
+	animation,
+	onKeyDown,
+	currentValueStyle
+}) => {
+	return (
+		<div
+			style={{
+				maxHeight: `${elementHeight}px`,
+				height: `${elementHeight}px`
+			}}
+			tabIndex={disabled ? '' : '0'}
+			className="wheel-picker"
+			onKeyDown={onKeyDown}
+			onMouseUp={onMouseUp}
+			onMouseLeave={onMouseLeave}
+			onWheel={onWheel}
+		>
+			<div
+				className="current-value"
+				style={{
+					minHeight: `${elementHeight}px`,
+					...currentValueStyle
+				}}
+			>
+				{animation ? (
+					<AnimationWheel
+						values={values}
+						onElementCreated={onElementCreated}
+						onMouseDown={onMouseDown}
+						onMouseMove={onMouseMove}
+						selectedIndex={selectedIndex}
+						valueFormater={valueFormater}
+						translate={translate}
+						offsetHeight={offsetHeight}
+					/>
+				) : (
+					<Wheel
+						values={values}
+						onElementCreated={onElementCreated}
+						onMouseDown={onMouseDown}
+						onMouseMove={onMouseMove}
+						selectedIndex={selectedIndex}
+						valueFormater={valueFormater}
+						translate={translate}
+						offsetHeight={offsetHeight}
+					/>
+				)}
+			</div>
+		</div>
+	);
+};
+
+WheelPickerBody.propTypes = {
+	...Wheel.propTypes,
+	onMouseUp: PropTypes.func,
+	elementHeight: PropTypes.number,
+	disabled: PropTypes.bool,
+	animation: PropTypes.bool,
+	onKeyDown: PropTypes.func,
+	onMouseLeave: PropTypes.func,
+	onWheel: PropTypes.func,
+	currentValueStyle: PropTypes.object
+};
+
+WheelPickerBody.defaultProps = {
+	...Wheel.defaultProps,
+	onMouseUp: () => {},
+	elementHeight: 0,
+	disabled: false,
+	animation: true,
+	onKeyDown: () => {},
+	onMouseLeave: () => {},
+	onWheel: () => {},
+	currentValueStyle: {}
 };

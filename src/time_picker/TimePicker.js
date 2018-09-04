@@ -89,7 +89,7 @@ export default class TimePicker extends React.Component {
 							name="minute"
 							values={generateArrayValues(60, stepMinute)}
 							valueFormater={timeFormater}
-							disable={disableMinutes}
+							disabled={disableMinutes}
 							onChange={this._onValueChange}
 							selectedIndex={minute}
 						/>
