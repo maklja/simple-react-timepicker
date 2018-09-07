@@ -17,11 +17,15 @@ export default class TimePicker extends React.Component {
 		const dateValue = value || defaultValue;
 
 		this.state = {
-			value: dateValue,
+			value: this._roundDate(dateValue),
 			meridiem: use12Hours ? (dateValue.getHours() > 12 ? PM : AM) : null
 		};
 
+		// TODO problem if we hide during next render??
+		this._wheelComp = {};
+
 		this._onValueChange = this._onValueChange.bind(this);
+		this._onWheelExpended = this._onWheelExpended.bind(this);
 	}
 
 	render() {
@@ -66,6 +70,7 @@ export default class TimePicker extends React.Component {
 				{showHour ? (
 					<div className="cell">
 						<WheelPicker
+							ref={el => (this._wheelComp.hour = el)}
 							name="hour"
 							values={generateArrayValues(
 								use12Hours ? 13 : 24,
@@ -76,6 +81,7 @@ export default class TimePicker extends React.Component {
 							disabled={disableHour}
 							onChange={this._onValueChange}
 							selectedIndex={hour}
+							onExpand={this._onWheelExpended}
 						/>
 					</div>
 				) : (
@@ -86,12 +92,14 @@ export default class TimePicker extends React.Component {
 				{showMinutes ? (
 					<div className="cell">
 						<WheelPicker
+							ref={el => (this._wheelComp.minute = el)}
 							name="minute"
 							values={generateArrayValues(60, stepMinute)}
 							valueFormater={timeFormater}
 							disabled={disableMinutes}
 							onChange={this._onValueChange}
 							selectedIndex={minute}
+							onExpand={this._onWheelExpended}
 						/>
 					</div>
 				) : (
@@ -102,12 +110,14 @@ export default class TimePicker extends React.Component {
 				{showSeconds ? (
 					<div className="cell">
 						<WheelPicker
+							ref={el => (this._wheelComp.second = el)}
 							name="second"
 							values={generateArrayValues(60, stepSecond)}
 							valueFormater={timeFormater}
 							disabled={disableSeconds}
 							onChange={this._onValueChange}
 							selectedIndex={second}
+							onExpand={this._onWheelExpended}
 						/>
 					</div>
 				) : (
@@ -118,12 +128,14 @@ export default class TimePicker extends React.Component {
 				{showMilliseconds ? (
 					<div className="cell">
 						<WheelPicker
+							ref={el => (this._wheelComp.millisecond = el)}
 							name="millisecond"
 							values={generateArrayValues(1000, stepMilliseconds)}
 							valueFormater={timeFormater}
 							disabled={disableMilliseconds}
 							onChange={this._onValueChange}
 							selectedIndex={millisecond}
+							onExpand={this._onWheelExpended}
 						/>
 					</div>
 				) : (
@@ -133,12 +145,14 @@ export default class TimePicker extends React.Component {
 				{use12Hours && showHour ? (
 					<div className="cell">
 						<WheelPicker
+							ref={el => (this._wheelComp.meridiem = el)}
 							name="meridiem"
 							values={Object.values(MERIDIEMS)}
 							valueFormater={timeFormater}
 							disabled={disableHour}
 							onChange={this._onValueChange}
 							selectedIndex={meridiem}
+							onExpand={this._onWheelExpended}
 						/>
 					</div>
 				) : (
@@ -148,55 +162,100 @@ export default class TimePicker extends React.Component {
 		);
 	}
 
+	_onWheelExpended(name) {
+		for (const curCompName in this._wheelComp) {
+			if (curCompName !== name) {
+				this._wheelComp[curCompName].collapse();
+			}
+		}
+	}
+
+	_roundDate(dateValue) {
+		const {
+			stepHour,
+			stepMinute,
+			stepSecond,
+			stepMilliseconds
+		} = this.props;
+
+		// we need to round up sent date in props to respect steps for each time part
+		// if we don't do this always after first wheel collapse we will get onChange event
+		// even if no changes are made, this is only because rounding of date parts
+		let hour = dateValue.getHours(),
+			minute = dateValue.getMinutes(),
+			second = dateValue.getSeconds(),
+			millisecond = dateValue.getMilliseconds();
+
+		hour = Math.round(hour / stepHour) * stepHour;
+		minute = Math.round(minute / stepMinute) * stepMinute;
+		second = Math.round(second / stepSecond) * stepSecond;
+		millisecond =
+			Math.round(millisecond / stepMilliseconds) * stepMilliseconds;
+
+		const newDateValue = new Date(dateValue.getTime());
+		newDateValue.setHours(hour, minute, second, millisecond);
+
+		return newDateValue;
+	}
+
 	_onValueChange(newValue, name) {
-		const { onValueChange } = this.props;
+		this.setState(prevState => {
+			const { value, meridiem } = prevState;
+			const dateValue = value;
+			const newDateValue = new Date(dateValue.getTime());
+			let newMeridiem = meridiem;
 
-		this.setState(
-			prevState => {
-				const { value, meridiem } = prevState;
-				const dateValue = value;
-				const newDateValue = new Date(dateValue.getTime());
-				let newMeridiem = meridiem;
-
-				switch (name) {
-					case 'hour':
-						if (meridiem == null || meridiem === AM) {
-							newDateValue.setHours(newValue);
-						} else {
-							// Date object supports only 24 hour format, so in case user
-							// select PM we need to add 12 hours to selected hours
-							newDateValue.setHours(newValue + 12);
-						}
-						break;
-					case 'minute':
-						newDateValue.setMinutes(newValue);
-						break;
-					case 'second':
-						newDateValue.setSeconds(newValue);
-						break;
-					case 'millisecond':
-						newDateValue.setMilliseconds(newValue);
-						break;
-					case 'meridiem':
+			switch (name) {
+				case 'hour':
+					if (meridiem == null || meridiem === AM) {
+						newDateValue.setHours(newValue);
+					} else {
+						// Date object supports only 24 hour format, so in case user
+						// select PM we need to add 12 hours to selected hours
+						newDateValue.setHours(newValue + 12);
+					}
+					break;
+				case 'minute':
+					newDateValue.setMinutes(newValue);
+					break;
+				case 'second':
+					newDateValue.setSeconds(newValue);
+					break;
+				case 'millisecond':
+					newDateValue.setMilliseconds(newValue);
+					break;
+				case 'meridiem':
+					if (meridiem !== newValue) {
 						newDateValue.setHours(
 							newDateValue.getHours() +
 								(newValue === PM ? 12 : -12)
 						);
 						newMeridiem = newValue;
-						break;
-					default:
-						throw new Error(
-							`Unsupported case ${name} on value change.`
-						);
-				}
+					}
+					break;
+				default:
+					throw new Error(
+						`Unsupported case ${name} on value change.`
+					);
+			}
 
-				return {
-					value: newDateValue,
-					meridiem: newMeridiem
-				};
-			},
-			() => onValueChange(this.state.value, this.props.id)
-		);
+			return {
+				value: newDateValue,
+				meridiem: newMeridiem
+			};
+		});
+	}
+
+	componentDidUpdate(prevProps, prevState) {
+		const { value, meridiem } = this.state;
+
+		if (
+			value.getTime() !== prevState.value.getTime() ||
+			meridiem !== prevState.meridiem
+		) {
+			const { onValueChange, id } = this.props;
+			onValueChange(value, id);
+		}
 	}
 }
 

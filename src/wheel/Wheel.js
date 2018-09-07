@@ -7,6 +7,8 @@ export const Wheel = ({
 	selectedIndex,
 	onMouseDown,
 	onMouseMove,
+	onTouchStart,
+	onTouchMove,
 	onElementCreated,
 	valueFormater,
 	translate,
@@ -14,11 +16,14 @@ export const Wheel = ({
 }) => {
 	return (
 		<div
+			ref={onElementCreated}
+			onTouchStart={onTouchStart}
+			onTouchMove={onTouchMove}
 			onMouseDown={onMouseDown}
 			onMouseMove={onMouseMove}
-			ref={onElementCreated}
 			style={{
-				transform: `translateY(${translate}px)`
+				transform: `translateY(${translate}px)`,
+				touchAction: 'none' // TODO move
 			}}
 		>
 			<div className="offset-div" style={{ marginTop: offsetHeight }} />
@@ -46,7 +51,9 @@ Wheel.propTypes = {
 	onMouseMove: PropTypes.func,
 	onElementCreated: PropTypes.func,
 	translate: PropTypes.number,
-	offsetHeight: PropTypes.number
+	offsetHeight: PropTypes.number,
+	onTouchStart: PropTypes.func,
+	onTouchMove: PropTypes.func
 };
 
 Wheel.defaultProps = {
@@ -56,7 +63,9 @@ Wheel.defaultProps = {
 	onMouseMove: () => {},
 	onElementCreated: () => {},
 	translate: 0,
-	offsetHeight: 0
+	offsetHeight: 0,
+	onTouchStart: () => {},
+	onTouchMove: () => {}
 };
 
 // TODO extract to configuration
@@ -74,6 +83,7 @@ export const AnimationWheel = ({
 	selectedIndex,
 	onMouseDown,
 	onMouseMove,
+	onTouchStart,
 	onElementCreated,
 	valueFormater,
 	translate,
@@ -88,6 +98,7 @@ export const AnimationWheel = ({
 					onElementCreated={onElementCreated}
 					onMouseDown={onMouseDown}
 					onMouseMove={onMouseMove}
+					onTouchStart={onTouchStart}
 					selectedIndex={selectedIndex}
 					valueFormater={valueFormater}
 					translate={translateY}
@@ -115,6 +126,10 @@ export const WheelPickerBody = ({
 	onMouseUp,
 	onMouseLeave,
 	onWheel,
+	onTouchStart,
+	onTouchMove,
+	onTouchEnd,
+	onTouchCancel,
 	onElementCreated,
 	translate,
 	offsetHeight,
@@ -136,6 +151,8 @@ export const WheelPickerBody = ({
 			onMouseUp={onMouseUp}
 			onMouseLeave={onMouseLeave}
 			onWheel={onWheel}
+			onTouchEnd={onTouchEnd}
+			onTouchCancel={onTouchCancel}
 		>
 			<div
 				className="current-value"
@@ -148,6 +165,8 @@ export const WheelPickerBody = ({
 					<AnimationWheel
 						values={values}
 						onElementCreated={onElementCreated}
+						onTouchStart={onTouchStart}
+						onTouchMove={onTouchMove}
 						onMouseDown={onMouseDown}
 						onMouseMove={onMouseMove}
 						selectedIndex={selectedIndex}
@@ -159,6 +178,8 @@ export const WheelPickerBody = ({
 					<Wheel
 						values={values}
 						onElementCreated={onElementCreated}
+						onTouchStart={onTouchStart}
+						onTouchMove={onTouchMove}
 						onMouseDown={onMouseDown}
 						onMouseMove={onMouseMove}
 						selectedIndex={selectedIndex}
@@ -181,7 +202,9 @@ WheelPickerBody.propTypes = {
 	onKeyDown: PropTypes.func,
 	onMouseLeave: PropTypes.func,
 	onWheel: PropTypes.func,
-	currentValueStyle: PropTypes.object
+	currentValueStyle: PropTypes.object,
+	onTouchEnd: PropTypes.func,
+	onTouchCancel: PropTypes.func
 };
 
 WheelPickerBody.defaultProps = {
@@ -193,5 +216,7 @@ WheelPickerBody.defaultProps = {
 	onKeyDown: () => {},
 	onMouseLeave: () => {},
 	onWheel: () => {},
-	currentValueStyle: {}
+	currentValueStyle: {},
+	onTouchEnd: () => {},
+	onTouchCancel: () => {}
 };

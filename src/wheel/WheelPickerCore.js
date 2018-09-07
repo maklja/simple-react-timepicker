@@ -39,12 +39,19 @@ export default class WheelPickerCore extends React.Component {
 			dragCrossed: 0
 		};
 
+		this._touchActive = false;
+
+		this.collapse = this.collapse.bind(this);
 		this._onMouseDown = this._onMouseDown.bind(this);
 		this._onMouseMove = this._onMouseMove.bind(this);
 		this._onMouseUp = this._onMouseUp.bind(this);
 		this._onMouseLeave = this._onMouseLeave.bind(this);
 		this._onWheel = this._onWheel.bind(this);
 		this._onKeyDown = this._onKeyDown.bind(this);
+		this._onTouchStart = this._onTouchStart.bind(this);
+		this._onTouchMove = this._onTouchMove.bind(this);
+		this._onTouchEnd = this._onTouchEnd.bind(this);
+		this._onTouchCancel = this._onTouchCancel.bind(this);
 	}
 
 	render() {
@@ -90,6 +97,10 @@ export default class WheelPickerCore extends React.Component {
 					offsetHeight={offsetHeight}
 					valueFormater={valueFormater}
 					translate={translateY}
+					onTouchStart={this._onTouchStart}
+					onTouchEnd={this._onTouchEnd}
+					onTouchMove={this._onTouchMove}
+					onTouchCancel={this._onTouchCancel}
 					onMouseDown={this._onMouseDown}
 					onMouseMove={this._onMouseMove}
 					onMouseUp={this._onMouseUp}
@@ -104,8 +115,24 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	componentDidMount() {
+		this._calculateElementValueSize();
+		window.addEventListener('touchstart', this.collapse);
+	}
+
+	componentWillUnmount() {
+		this._valuePickerEl = null;
+		window.removeEventListener('touchstart', this.collapse);
+	}
+
+	collapse() {
+		this._touchActive = false;
+		this._onDragStop();
+	}
+
+	_calculateElementValueSize() {
+		// we must have reference to wheel DOM top element in order to calculate size of the single value inside of it
 		if (this._valuePickerEl == null) {
-			return;
+			throw new Error('Reference to mandatory DOM element not found');
 		}
 		// first div in children, called offset-div is used to provide well offset during translation
 		// and shouldn't be included in calculations
@@ -130,10 +157,6 @@ export default class WheelPickerCore extends React.Component {
 			elementHeight,
 			selectedIndex: Math.abs(startPosition / elementHeight)
 		});
-	}
-
-	componentWillUnmount() {
-		this._valuePickerEl = null;
 	}
 
 	_translateRoundPosition(translate, elementHeight) {
@@ -197,33 +220,14 @@ export default class WheelPickerCore extends React.Component {
 		onChange(values[selectedValueIndex], name);
 	}
 
-	_onMouseDown(e) {
-		if (this._isDisabled()) {
-			return;
-		}
-
-		// if left click
-		// TODO move to configuration
-		if (e.button === 0) {
-			const position = e.pageY;
-
-			this.setState((prevState, props) => {
-				const translateState = this._edgeTranslation(
-					prevState,
-					props.extendValuesTime
-				);
-				return {
-					dragStarted: true,
-					dragStartPosition: position,
-					...translateState
-				};
-			});
-		}
-		this.props.onMouseDown(e);
-	}
-
 	_edgeTranslation(state, extendValuesTime, direction = 1) {
-		const { selectedIndex, elementHeight } = state;
+		const {
+			selectedIndex,
+			elementHeight,
+			translate,
+			values,
+			offsetHeight
+		} = state;
 		// get available spaces before and after wheel
 		const { maxSpaceTop, maxSpaceBottom } = this._getAvailableSpace(
 			elementHeight,
@@ -232,7 +236,12 @@ export default class WheelPickerCore extends React.Component {
 
 		// set default values
 		let newSelectedIndex = selectedIndex;
-		let newTranslateStae = {};
+		let newTranslateStae = {
+			translate,
+			values,
+			offsetHeight,
+			selectedIndex
+		};
 
 		// there is only change that there is no space before or after wheel, but not both, atleast in theory
 		// bottom
@@ -261,28 +270,113 @@ export default class WheelPickerCore extends React.Component {
 		};
 	}
 
-	_onMouseMove(e) {
-		if (this._isDisabled()) {
+	_onTouchStart(e) {
+		if (e.changedTouches && e.changedTouches.length === 1) {
+			e.stopPropagation();
+			e.preventDefault();
+
+			this._touchActive = true;
+
+			const position = e.changedTouches[0].pageY;
+
+			this._onDragStart(position);
+		}
+	}
+
+	_onTouchMove(e) {
+		if (this._isDisabled() || this._isTouchActive() === false) {
 			return;
 		}
 
-		if (this._isDragStarted()) {
-			this._onDragStart(e.pageY);
+		if (
+			this._isDragStarted() &&
+			e.changedTouches &&
+			e.changedTouches.length === 1
+		) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			const position = e.changedTouches[0].pageY;
+			this._onDrag(position);
 		}
+	}
+
+	_onTouchEnd(e) {
+		if (this._isDisabled() || this._isTouchActive() === false) {
+			return;
+		}
+
+		const { changedTouches, currentTarget } = e;
+
+		if (changedTouches && changedTouches.length === 1) {
+			e.stopPropagation();
+			e.preventDefault();
+
+			const { elementHeight } = this.state;
+
+			// current target is wheel main center div
+			const { top } = currentTarget.getBoundingClientRect();
+			// position of our touch
+			const touchPosition = changedTouches[0].pageY;
+			// if user clicks on active value we will stop drag event
+			// otherwise we will allow user do continue drag in order to find value
+			// that we wish to select
+			const endDrag =
+				(top <= touchPosition &&
+					touchPosition <= top + elementHeight) === false;
+
+			this._onDragStop(endDrag);
+		}
+	}
+
+	_onTouchCancel(e) {
+		if (this._isDisabled() || this._isTouchActive() === false) {
+			return;
+		}
+
+		e.stopPropagation();
+		e.preventDefault();
+		this._onDragStop();
+	}
+
+	_onMouseDown(e) {
+		if (this._isDisabled() || this._isTouchActive()) {
+			return;
+		}
+
+		// if left click
+		// TODO move to configuration
+		if (e.button === 0) {
+			const position = e.pageY;
+			this._onDragStart(position);
+		}
+		this.props.onMouseDown(e);
+	}
+
+	_onMouseMove(e) {
+		if (this._isDisabled() || this._isTouchActive()) {
+			return;
+		}
+
+		this._onDrag(e.pageY);
 
 		this.props.onMouseMove(e);
 	}
 
 	_onMouseUp(e) {
-		if (this._isDisabled()) {
+		if (this._isDisabled() || this._isTouchActive()) {
 			return;
 		}
-		this._onDragStop();
+
+		if (e.button === 0) {
+			this._onDragStop();
+		}
+
 		this.props.onMouseUp(e);
 	}
 
 	_onMouseLeave(e) {
-		if (this._isDisabled()) {
+		if (this._isDisabled() || this._isTouchActive()) {
 			return;
 		}
 		this._onDragStop();
@@ -305,49 +399,76 @@ export default class WheelPickerCore extends React.Component {
 		this.props.onKeyDown(e);
 	}
 
-	_onDragStart(mousePosition) {
+	_onDragStart(position) {
 		this.setState(
-			prevState => {
-				let {
-					dragStartPosition,
-					values,
-					elementHeight,
-					translate,
-					dragCrossed
-				} = prevState;
-				// calculate distance between prevous position and current one
-				// and translate component by that value
-				const newPosition =
-					mousePosition + translate - dragStartPosition;
-				let dragCrossedNew = dragCrossed + newPosition - translate;
-
-				let newValues = values;
-				let offsetHeight = prevState.offsetHeight;
-				// pass to the next value if we crossed half path of element height
-				// this way we can select next element without need to drag whole element
-				// height to select next value
-				if (Math.abs(dragCrossedNew) > elementHeight / 2) {
-					const direction = Math.sign(dragCrossedNew);
-
-					newValues = arrayRotate(values, direction > 0);
-					dragCrossedNew = dragCrossedNew - elementHeight * direction;
-					offsetHeight =
-						prevState.offsetHeight + elementHeight * direction * -1;
-				}
-
+			(prevState, props) => {
+				const translateState = this._edgeTranslation(
+					prevState,
+					props.extendValuesTime
+				);
 				return {
-					translate: newPosition,
-					dragStartPosition: mousePosition,
-					dragCrossed: dragCrossedNew,
-					values: newValues,
-					offsetHeight: offsetHeight
+					dragStarted: true,
+					dragStartPosition: position,
+					...translateState
 				};
 			},
-			() => this.props.onDragStarted()
+			() => {
+				const { onDragStarted, name } = this.props;
+				onDragStarted(name);
+			}
 		);
 	}
 
-	_onDragStop() {
+	_onDrag(position) {
+		if (this._isDragStarted() === false) {
+			return;
+		}
+
+		this.setState(prevState => {
+			let {
+				dragStartPosition,
+				values,
+				elementHeight,
+				translate,
+				dragCrossed,
+				offsetHeight
+			} = prevState;
+			// calculate distance between prevous position and current one
+			// and translate component by that value
+			const newPosition = position + translate - dragStartPosition;
+			const newDelta = dragCrossed + newPosition - translate;
+
+			// pass to the next value if we crossed half path of element height
+			// this way we can select next element without need to drag whole element
+			// height to select next value
+			if (Math.abs(newDelta) > elementHeight / 2) {
+				const direction = Math.sign(newDelta);
+				// n is number of elements we crossed during draging gesture
+				// it is posible that we passed multiple elements if we
+				// drag "too fast"
+				const n = Math.round(Math.abs(newDelta / elementHeight));
+
+				return {
+					translate: newPosition,
+					dragStartPosition: position,
+					dragCrossed: newDelta - elementHeight * direction * n,
+					values: arrayRotate(values, direction > 0, n),
+					offsetHeight:
+						offsetHeight + elementHeight * direction * -1 * n
+				};
+			} else {
+				return {
+					translate: newPosition,
+					dragStartPosition: position,
+					dragCrossed: newDelta,
+					values: values,
+					offsetHeight: offsetHeight
+				};
+			}
+		});
+	}
+
+	_onDragStop(dragContinue = false) {
 		if (this._isDragStarted() === false) {
 			return;
 		}
@@ -368,7 +489,7 @@ export default class WheelPickerCore extends React.Component {
 				);
 
 				return {
-					dragStarted: false,
+					dragStarted: dragContinue,
 					// we need to round position because current translated distance
 					// wont fit in current value div, so we need to round it up
 					// for example if single value height is 29 px, translation point must
@@ -388,8 +509,10 @@ export default class WheelPickerCore extends React.Component {
 				};
 			},
 			() => {
-				this.props.onDragStoped();
-				this._onValueChanged();
+				if (dragContinue === false) {
+					this.props.onDragStoped();
+					this._onValueChanged();
+				}
 			}
 		);
 	}
@@ -466,6 +589,10 @@ export default class WheelPickerCore extends React.Component {
 
 	_isDragStarted() {
 		return this.state.dragStarted;
+	}
+
+	_isTouchActive() {
+		return this._touchActive;
 	}
 }
 

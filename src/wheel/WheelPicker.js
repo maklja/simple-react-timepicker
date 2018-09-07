@@ -65,6 +65,10 @@ export default class WheelPicker extends React.Component {
 		);
 	}
 
+	collapse() {
+		this._wheelPicker.collapse();
+	}
+
 	_wheelMove(direction) {
 		this._wheelPicker.moveToNextValue(direction);
 	}
@@ -89,9 +93,16 @@ export default class WheelPicker extends React.Component {
 	}
 
 	_onDragStarted() {
-		this.setState({
-			dragStarted: true
-		});
+		this.setState(
+			{
+				dragStarted: true
+			},
+			() => {
+				const { name, onExpand } = this.props;
+
+				onExpand(name);
+			}
+		);
 	}
 
 	_onDragStoped() {
@@ -112,7 +123,8 @@ WheelPicker.propTypes = {
 	showButtons: PropTypes.bool,
 	enableAnimation: PropTypes.bool,
 	disabled: PropTypes.bool,
-	onChange: PropTypes.func
+	onChange: PropTypes.func,
+	onExpand: PropTypes.func
 };
 
 WheelPicker.defaultProps = {
@@ -123,5 +135,6 @@ WheelPicker.defaultProps = {
 	showButtons: true,
 	enableAnimation: true,
 	disabled: false,
-	onChange: () => {}
+	onChange: () => {},
+	onExpand: () => {}
 };
