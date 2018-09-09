@@ -23,22 +23,6 @@ export const infinitiveInvoke = (
 	};
 };
 
-export const arrayRotate = (arr, reverse, shiftNum = 1) => {
-	const cloneArr = [...arr];
-
-	if (reverse) {
-		for (let i = 0; i < shiftNum; i++) {
-			cloneArr.unshift(cloneArr.pop());
-		}
-	} else {
-		for (let i = 0; i < shiftNum; i++) {
-			cloneArr.push(cloneArr.shift());
-		}
-	}
-
-	return cloneArr;
-};
-
 export const generateArrayValues = (maxValue, step, startValue = 0) => {
 	const values = [];
 	for (let i = startValue; i < maxValue; i += step) {

@@ -3,11 +3,22 @@ import PropTypes from 'prop-types';
 
 import { WheelPickerBody } from './Wheel';
 
-import { arrayRotate, getWindowSize } from '../utils/helper';
+import { getWindowSize } from '../utils/helper';
+import {
+	sliceAroundMiddle,
+	arrayRotate,
+	duplicateArrayValues,
+	roundValueByStep,
+	nextTranslate,
+	nextOffset,
+	windowAvailableSpace,
+	translateInsufficientSpace,
+	convertPostionToTranslate,
+	nextTranslateDelta,
+	isInsideElement
+} from './calc_func';
 
 import './styles.css';
-
-const FREE_SPACE_PADDING = 20; // px
 
 export default class WheelPickerCore extends React.Component {
 	constructor(props) {
@@ -74,14 +85,7 @@ export default class WheelPickerCore extends React.Component {
 		const dragStartedClass = dragStarted ? 'choose-started' : '';
 
 		const translateY = translate + activeDelta;
-
-		const middleValueIndex = Math.round(values.length / 2);
-		const beginIndex = middleValueIndex - extendValuesTime * 2;
-		const endIndex = middleValueIndex + extendValuesTime * 2;
-		const visibleValues = values.slice(
-			beginIndex < 0 ? 0 : beginIndex,
-			endIndex
-		);
+		const visibleValues = sliceAroundMiddle(values, extendValuesTime * 2);
 
 		return (
 			<div
@@ -147,7 +151,7 @@ export default class WheelPickerCore extends React.Component {
 
 		// calculate single element height
 		const elementHeight = valuesElementsSize / valuesChildren.length;
-		const startPosition = this._translateRoundPosition(
+		const startPosition = roundValueByStep(
 			-valuesElementsSize / 2,
 			elementHeight
 		);
@@ -159,54 +163,49 @@ export default class WheelPickerCore extends React.Component {
 		});
 	}
 
-	_translateRoundPosition(translate, elementHeight) {
-		return Math.round(translate / elementHeight) * elementHeight;
-	}
-
-	_extendValues(values, maxValuesNumber, selectedIndex) {
-		// create copy of the current values
-		let valuesCopy = [...values];
-
-		valuesCopy = arrayRotate(valuesCopy, false, selectedIndex);
-
-		// maxValues number represent number of visible elements during selection mode
-		// if array doesn't have enough elements we need to clone them multiple times in
-		// order to satisfy maxValuesNumber condition
-		if (valuesCopy.length < maxValuesNumber) {
-			while (valuesCopy.length <= maxValuesNumber * 2) {
-				valuesCopy = valuesCopy.concat(valuesCopy);
-			}
-		}
+	_extendValues(values, maxLength, selectedIndex) {
+		let expandedValues = duplicateArrayValues(
+			values,
+			maxLength * 2,
+			selectedIndex
+		);
 
 		// rotate elements in the array so the first element is in the center of the array
 		return arrayRotate(
-			valuesCopy,
+			expandedValues,
 			false,
-			Math.round(valuesCopy.length / 2)
+			Math.round(expandedValues.length / 2)
 		);
 	}
 
 	moveToNextValue(direction, n = 1) {
 		this.setState(prevState => {
-			return this._calculateNextValue(prevState, direction, n);
+			const {
+				translate,
+				elementHeight,
+				offsetHeight,
+				values
+			} = prevState;
+
+			return {
+				// translate to new value
+				translate: nextTranslate(
+					translate,
+					elementHeight,
+					direction,
+					n
+				),
+				// change offset to simulate animation transition
+				offsetHeight: nextOffset(
+					offsetHeight,
+					elementHeight,
+					direction,
+					n
+				),
+				// rotate values for n places in order to position at new value
+				values: arrayRotate(values, direction > 0, n)
+			};
 		}, this._onValueChanged);
-	}
-
-	_calculateNextValue(
-		{ translate, elementHeight, offsetHeight, values },
-		direction,
-		n
-	) {
-		// rotate values for n places in order to position at new value
-		const newValues = arrayRotate(values, direction > 0, n);
-
-		return {
-			// translate to new value
-			translate: translate + n * elementHeight * direction,
-			// change offset to simulate animation transition
-			offsetHeight: offsetHeight + n * elementHeight * direction * -1,
-			values: newValues
-		};
 	}
 
 	// called every time value on the wheel changes
@@ -220,7 +219,7 @@ export default class WheelPickerCore extends React.Component {
 		onChange(values[selectedValueIndex], name);
 	}
 
-	_edgeTranslation(state, extendValuesTime, direction = 1) {
+	_checkInsufficientSpace(state, direction = 1) {
 		const {
 			selectedIndex,
 			elementHeight,
@@ -228,46 +227,30 @@ export default class WheelPickerCore extends React.Component {
 			values,
 			offsetHeight
 		} = state;
+
+		const { extendValuesTime } = this.props;
+
 		// get available spaces before and after wheel
-		const { maxSpaceTop, maxSpaceBottom } = this._getAvailableSpace(
+		const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
 			elementHeight,
-			extendValuesTime
+			extendValuesTime,
+			this._el.getBoundingClientRect(),
+			getWindowSize()
 		);
 
-		// set default values
-		let newSelectedIndex = selectedIndex;
-		let newTranslateStae = {
-			translate,
-			values,
-			offsetHeight,
-			selectedIndex
-		};
-
-		// there is only change that there is no space before or after wheel, but not both, atleast in theory
-		// bottom
-		if (maxSpaceBottom !== extendValuesTime) {
-			// translate values to new position so that all values are visible1
-			newTranslateStae = this._calculateNextValue(
-				state,
+		return (
+			translateInsufficientSpace(
+				values,
+				translate,
+				offsetHeight,
 				direction,
-				extendValuesTime - maxSpaceBottom
-			);
-			// new selected index
-			newSelectedIndex += (extendValuesTime - maxSpaceBottom) * direction;
-			// top
-		} else if (maxSpaceTop !== extendValuesTime) {
-			newTranslateStae = this._calculateNextValue(
-				state,
-				-1 * direction,
-				extendValuesTime - maxSpaceTop
-			);
-			newSelectedIndex -= (extendValuesTime - maxSpaceTop) * direction;
-		}
-
-		return {
-			...newTranslateStae,
-			selectedIndex: newSelectedIndex
-		};
+				selectedIndex,
+				elementHeight,
+				extendValuesTime,
+				maxSpaceBottom,
+				maxSpaceTop
+			) || state
+		);
 	}
 
 	_onTouchStart(e) {
@@ -317,13 +300,12 @@ export default class WheelPickerCore extends React.Component {
 			// current target is wheel main center div
 			const { top } = currentTarget.getBoundingClientRect();
 			// position of our touch
-			const touchPosition = changedTouches[0].pageY;
+			const touchPosition = changedTouches[0].clientY;
+
 			// if user clicks on active value we will stop drag event
 			// otherwise we will allow user do continue drag in order to find value
 			// that we wish to select
-			const endDrag =
-				(top <= touchPosition &&
-					touchPosition <= top + elementHeight) === false;
+			const endDrag = !isInsideElement(top, elementHeight, touchPosition);
 
 			this._onDragStop(endDrag);
 		}
@@ -401,15 +383,15 @@ export default class WheelPickerCore extends React.Component {
 
 	_onDragStart(position) {
 		this.setState(
-			(prevState, props) => {
-				const translateState = this._edgeTranslation(
-					prevState,
-					props.extendValuesTime
-				);
+			prevState => {
+				const { dragStarted } = prevState;
+				const translateState = dragStarted
+					? {}
+					: this._checkInsufficientSpace(prevState);
 				return {
+					...translateState,
 					dragStarted: true,
-					dragStartPosition: position,
-					...translateState
+					dragStartPosition: position
 				};
 			},
 			() => {
@@ -435,8 +417,16 @@ export default class WheelPickerCore extends React.Component {
 			} = prevState;
 			// calculate distance between prevous position and current one
 			// and translate component by that value
-			const newPosition = position + translate - dragStartPosition;
-			const newDelta = dragCrossed + newPosition - translate;
+			const newTranslate = convertPostionToTranslate(
+				position,
+				dragStartPosition,
+				translate
+			);
+			const newDelta = nextTranslateDelta(
+				dragCrossed,
+				newTranslate,
+				translate
+			);
 
 			// pass to the next value if we crossed half path of element height
 			// this way we can select next element without need to drag whole element
@@ -449,16 +439,20 @@ export default class WheelPickerCore extends React.Component {
 				const n = Math.round(Math.abs(newDelta / elementHeight));
 
 				return {
-					translate: newPosition,
+					translate: newTranslate,
 					dragStartPosition: position,
 					dragCrossed: newDelta - elementHeight * direction * n,
 					values: arrayRotate(values, direction > 0, n),
-					offsetHeight:
-						offsetHeight + elementHeight * direction * -1 * n
+					offsetHeight: nextOffset(
+						offsetHeight,
+						elementHeight,
+						direction,
+						n
+					)
 				};
 			} else {
 				return {
-					translate: newPosition,
+					translate: newTranslate,
 					dragStartPosition: position,
 					dragCrossed: newDelta,
 					values: values,
@@ -474,7 +468,7 @@ export default class WheelPickerCore extends React.Component {
 		}
 
 		this.setState(
-			(prevState, props) => {
+			prevState => {
 				const { elementHeight, dragCrossed } = prevState;
 
 				const {
@@ -482,11 +476,9 @@ export default class WheelPickerCore extends React.Component {
 					values,
 					offsetHeight,
 					selectedIndex
-				} = this._edgeTranslation(
-					prevState,
-					props.extendValuesTime,
-					-1
-				);
+				} = dragContinue
+					? prevState
+					: this._checkInsufficientSpace(prevState, -1);
 
 				return {
 					dragStarted: dragContinue,
@@ -495,7 +487,7 @@ export default class WheelPickerCore extends React.Component {
 					// for example if single value height is 29 px, translation point must
 					// go 29px, 58px, 87px and so on, this will ensure that currently selected value
 					// is always visible
-					translate: this._translateRoundPosition(
+					translate: roundValueByStep(
 						// because draging can interapted at any time
 						// we need to include current draging distance
 						// to avoid rounding errors
@@ -517,43 +509,13 @@ export default class WheelPickerCore extends React.Component {
 		);
 	}
 
-	// TODO document
-	_getAvailableSpace(elementHeight, extendValuesTime) {
-		let { top, bottom } = this._el.getBoundingClientRect();
-		const { height } = getWindowSize();
-
-		top += -FREE_SPACE_PADDING;
-		bottom += FREE_SPACE_PADDING;
-		// calculate top available space
-		// calculate how many elements can fit before time picker
-		const maxSpaceTop = Math.min(
-			extendValuesTime,
-			Math.round(top / elementHeight)
-		);
-		const offsetTop = maxSpaceTop * elementHeight;
-
-		// calculate bottom available space
-		// calculate how many elements can fit after time picker
-		const maxSpaceBottom = Math.min(
-			extendValuesTime,
-			Math.round(Math.abs(height - bottom) / elementHeight)
-		);
-		const offsetBottom =
-			(extendValuesTime - maxSpaceBottom) * elementHeight * -1;
-
-		return {
-			maxSpaceTop,
-			maxSpaceBottom,
-			offsetTop,
-			offsetBottom
-		};
-	}
-
 	_getChooseStyle() {
 		const { elementHeight, extendValuesTime } = this.state;
-		const { offsetTop, offsetBottom } = this._getAvailableSpace(
+		const { offsetTop, offsetBottom } = windowAvailableSpace(
 			elementHeight,
-			extendValuesTime
+			extendValuesTime,
+			this._el.getBoundingClientRect(),
+			getWindowSize()
 		);
 
 		return {
