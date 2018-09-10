@@ -46,6 +46,13 @@ export default class DefaultButton extends React.Component {
 		);
 	}
 
+	componentWillUnmount() {
+		if (this._cancelPress != null) {
+			this._cancelPress();
+			this._cancelPress = null;
+		}
+	}
+
 	_onKeyDown(e) {
 		if (this.isDisabled()) {
 			return;

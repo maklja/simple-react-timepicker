@@ -12,7 +12,8 @@ export const Wheel = ({
 	onElementCreated,
 	valueFormater,
 	translate,
-	offsetHeight
+	offsetHeight,
+	disabled
 }) => {
 	return (
 		<div
@@ -21,6 +22,7 @@ export const Wheel = ({
 			onTouchMove={onTouchMove}
 			onMouseDown={onMouseDown}
 			onMouseMove={onMouseMove}
+			tabIndex={disabled ? '' : '0'}
 			style={{
 				transform: `translateY(${translate}px)`,
 				touchAction: 'none' // TODO move
@@ -53,7 +55,8 @@ Wheel.propTypes = {
 	translate: PropTypes.number,
 	offsetHeight: PropTypes.number,
 	onTouchStart: PropTypes.func,
-	onTouchMove: PropTypes.func
+	onTouchMove: PropTypes.func,
+	disabled: PropTypes.bool
 };
 
 Wheel.defaultProps = {
@@ -65,7 +68,8 @@ Wheel.defaultProps = {
 	translate: 0,
 	offsetHeight: 0,
 	onTouchStart: () => {},
-	onTouchMove: () => {}
+	onTouchMove: () => {},
+	disabled: false
 };
 
 // TODO extract to configuration
@@ -78,33 +82,13 @@ const createAnimationSettings = translateY => {
 	};
 };
 
-export const AnimationWheel = ({
-	values,
-	selectedIndex,
-	onMouseDown,
-	onMouseMove,
-	onTouchStart,
-	onElementCreated,
-	valueFormater,
-	translate,
-	offsetHeight
-}) => {
+export const AnimationWheel = props => {
+	const { translate } = props;
 	const animationSettings = createAnimationSettings(translate);
+
 	return (
 		<Motion style={animationSettings}>
-			{({ translateY }) => (
-				<Wheel
-					values={values}
-					onElementCreated={onElementCreated}
-					onMouseDown={onMouseDown}
-					onMouseMove={onMouseMove}
-					onTouchStart={onTouchStart}
-					selectedIndex={selectedIndex}
-					valueFormater={valueFormater}
-					translate={translateY}
-					offsetHeight={offsetHeight}
-				/>
-			)}
+			{({ translateY }) => <Wheel {...props} translate={translateY} />}
 		</Motion>
 	);
 };
@@ -145,7 +129,6 @@ export const WheelPickerBody = ({
 				maxHeight: `${elementHeight}px`,
 				height: `${elementHeight}px`
 			}}
-			tabIndex={disabled ? '' : '0'}
 			className="wheel-picker"
 			onKeyDown={onKeyDown}
 			onMouseUp={onMouseUp}
@@ -173,6 +156,7 @@ export const WheelPickerBody = ({
 						valueFormater={valueFormater}
 						translate={translate}
 						offsetHeight={offsetHeight}
+						disabled={disabled}
 					/>
 				) : (
 					<Wheel
@@ -186,6 +170,7 @@ export const WheelPickerBody = ({
 						valueFormater={valueFormater}
 						translate={translate}
 						offsetHeight={offsetHeight}
+						disabled={disabled}
 					/>
 				)}
 			</div>
@@ -197,7 +182,6 @@ WheelPickerBody.propTypes = {
 	...Wheel.propTypes,
 	onMouseUp: PropTypes.func,
 	elementHeight: PropTypes.number,
-	disabled: PropTypes.bool,
 	animation: PropTypes.bool,
 	onKeyDown: PropTypes.func,
 	onMouseLeave: PropTypes.func,
@@ -211,7 +195,6 @@ WheelPickerBody.defaultProps = {
 	...Wheel.defaultProps,
 	onMouseUp: () => {},
 	elementHeight: 0,
-	disabled: false,
 	animation: true,
 	onKeyDown: () => {},
 	onMouseLeave: () => {},

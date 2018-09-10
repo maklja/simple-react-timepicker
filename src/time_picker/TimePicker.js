@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { generateArrayValues, timeFormater } from '../utils/helper';
+import { generateArrayValues, timeFormater, roundDate } from '../utils/helper';
 import WheelPicker from '../wheel/WheelPicker';
 
 import './style.css';
@@ -13,11 +13,25 @@ export default class TimePicker extends React.Component {
 	constructor(props) {
 		super(props);
 
-		const { defaultValue, value, use12Hours } = props;
+		const {
+			defaultValue,
+			value,
+			use12Hours,
+			stepHour,
+			stepMinute,
+			stepSecond,
+			stepMilliseconds
+		} = props;
 		const dateValue = value || defaultValue;
 
 		this.state = {
-			value: this._roundDate(dateValue),
+			value: roundDate(
+				dateValue,
+				stepHour,
+				stepMinute,
+				stepSecond,
+				stepMilliseconds
+			),
 			meridiem: use12Hours ? (dateValue.getHours() > 12 ? PM : AM) : null
 		};
 
@@ -43,7 +57,9 @@ export default class TimePicker extends React.Component {
 			disableHour,
 			disableMinutes,
 			disableSeconds,
-			disableMilliseconds
+			disableMilliseconds,
+			onFocus,
+			onBlur
 		} = this.props;
 
 		const { value } = this.state;
@@ -66,7 +82,13 @@ export default class TimePicker extends React.Component {
 		millisecond = Math.round(millisecond / stepMilliseconds);
 
 		return (
-			<div id={id} className="time-picker">
+			<div
+				id={id}
+				className="time-picker"
+				onFocus={onFocus}
+				onBlur={onBlur}
+				onClick={e => e.stopPropagation()}
+			>
 				{showHour ? (
 					<div className="cell">
 						<WheelPicker
@@ -170,34 +192,6 @@ export default class TimePicker extends React.Component {
 		}
 	}
 
-	_roundDate(dateValue) {
-		const {
-			stepHour,
-			stepMinute,
-			stepSecond,
-			stepMilliseconds
-		} = this.props;
-
-		// we need to round up sent date in props to respect steps for each time part
-		// if we don't do this always after first wheel collapse we will get onChange event
-		// even if no changes are made, this is only because rounding of date parts
-		let hour = dateValue.getHours(),
-			minute = dateValue.getMinutes(),
-			second = dateValue.getSeconds(),
-			millisecond = dateValue.getMilliseconds();
-
-		hour = Math.round(hour / stepHour) * stepHour;
-		minute = Math.round(minute / stepMinute) * stepMinute;
-		second = Math.round(second / stepSecond) * stepSecond;
-		millisecond =
-			Math.round(millisecond / stepMilliseconds) * stepMilliseconds;
-
-		const newDateValue = new Date(dateValue.getTime());
-		newDateValue.setHours(hour, minute, second, millisecond);
-
-		return newDateValue;
-	}
-
 	_onValueChange(newValue, name) {
 		this.setState(prevState => {
 			const { value, meridiem } = prevState;
@@ -246,6 +240,10 @@ export default class TimePicker extends React.Component {
 		});
 	}
 
+	componentWillUnmount() {
+		this._wheelComp = {};
+	}
+
 	componentDidUpdate(prevProps, prevState) {
 		const { value, meridiem } = this.state;
 
@@ -276,7 +274,9 @@ TimePicker.propTypes = {
 	disableMilliseconds: PropTypes.bool,
 	defaultValue: PropTypes.instanceOf(Date),
 	value: PropTypes.instanceOf(Date),
-	onValueChange: PropTypes.func
+	onValueChange: PropTypes.func,
+	onFocus: PropTypes.func,
+	onBlur: PropTypes.func
 };
 
 TimePicker.defaultProps = {
@@ -296,5 +296,7 @@ TimePicker.defaultProps = {
 	disableMilliseconds: false,
 	defaultValue: new Date(),
 	value: null,
-	onValueChange: () => {}
+	onValueChange: () => {},
+	onFocus: () => {},
+	onBlur: () => {}
 };

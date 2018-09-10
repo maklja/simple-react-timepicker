@@ -329,6 +329,7 @@ export default class WheelPickerCore extends React.Component {
 		// if left click
 		// TODO move to configuration
 		if (e.button === 0) {
+			e.currentTarget.focus();
 			const position = e.pageY;
 			this._onDragStart(position);
 		}
