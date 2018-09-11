@@ -24,18 +24,18 @@ export default class WheelPickerCore extends React.Component {
 	constructor(props) {
 		super(props);
 
-		const { values, extendValuesTime, selectedIndex } = props;
+		const { values, expandSize, selectedIndex } = props;
 
 		let expandedValues = this._extendValues(
 			values,
-			extendValuesTime,
+			expandSize,
 			selectedIndex
 		);
 
 		this.state = {
 			translate: 0,
 			elementHeight: 0,
-			extendValuesTime,
+			expandSize,
 			values: expandedValues,
 			offsetHeight: 0,
 			// set currently selected value
@@ -66,11 +66,17 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	render() {
-		const { valueFormater, enableAnimation, disabled } = this.props;
+		const {
+			valueFormater,
+			enableAnimation,
+			disabled,
+			alwaysExpand
+		} = this.props;
+
 		const {
 			translate,
 			elementHeight,
-			extendValuesTime,
+			expandSize,
 			values,
 			offsetHeight,
 			dragStarted
@@ -78,14 +84,17 @@ export default class WheelPickerCore extends React.Component {
 
 		// is component is in  choose mode we need to calculate the view port so the user can
 		// see more vvalues from the wheel
-		const chooseStyle = dragStarted ? this._getChooseStyle() : {};
+		const chooseStyle =
+			dragStarted || alwaysExpand ? this._getChooseStyle() : {};
 		// if choose started we need to translate whole view port up so the selectet value
 		// stays in the middle while active values are visible around it
-		const activeDelta = dragStarted ? elementHeight * extendValuesTime : 0;
-		const dragStartedClass = dragStarted ? 'choose-started' : '';
+		const activeDelta =
+			dragStarted || alwaysExpand ? elementHeight * expandSize : 0;
+		const dragStartedClass =
+			dragStarted || alwaysExpand ? 'choose-started' : '';
 
 		const translateY = translate + activeDelta;
-		const visibleValues = sliceAroundMiddle(values, extendValuesTime * 2);
+		const visibleValues = sliceAroundMiddle(values, expandSize * 2);
 
 		return (
 			<div
@@ -97,7 +106,9 @@ export default class WheelPickerCore extends React.Component {
 					selectedIndex={this._getHighlightedIndex()}
 					onElementCreated={el => (this._valuePickerEl = el)}
 					elementHeight={elementHeight}
-					animation={enableAnimation && dragStarted === false}
+					animation={
+						enableAnimation && this._isDragStarted() === false
+					}
 					offsetHeight={offsetHeight}
 					valueFormater={valueFormater}
 					translate={translateY}
@@ -228,12 +239,12 @@ export default class WheelPickerCore extends React.Component {
 			offsetHeight
 		} = state;
 
-		const { extendValuesTime } = this.props;
+		const { expandSize } = this.props;
 
 		// get available spaces before and after wheel
 		const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
 			elementHeight,
-			extendValuesTime,
+			expandSize,
 			this._el.getBoundingClientRect(),
 			getWindowSize()
 		);
@@ -246,7 +257,7 @@ export default class WheelPickerCore extends React.Component {
 				direction,
 				selectedIndex,
 				elementHeight,
-				extendValuesTime,
+				expandSize,
 				maxSpaceBottom,
 				maxSpaceTop
 			) || state
@@ -511,16 +522,19 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	_getChooseStyle() {
-		const { elementHeight, extendValuesTime } = this.state;
+		if (this._el == null) {
+			return {};
+		}
+		const { elementHeight, expandSize } = this.state;
 		const { offsetTop, offsetBottom } = windowAvailableSpace(
 			elementHeight,
-			extendValuesTime,
+			expandSize,
 			this._el.getBoundingClientRect(),
 			getWindowSize()
 		);
 
 		return {
-			height: `${elementHeight * (2 * extendValuesTime + 1)}px`,
+			height: `${elementHeight * (2 * expandSize + 1)}px`,
 			marginTop: `-${offsetTop - offsetBottom}px`
 		};
 	}
@@ -560,7 +574,8 @@ export default class WheelPickerCore extends React.Component {
 }
 
 WheelPickerCore.propTypes = {
-	extendValuesTime: PropTypes.number,
+	expandSize: PropTypes.number,
+	alwaysExpand: PropTypes.bool,
 	name: PropTypes.string,
 	values: PropTypes.arrayOf(
 		PropTypes.oneOfType([PropTypes.number, PropTypes.string])
@@ -581,7 +596,8 @@ WheelPickerCore.propTypes = {
 };
 
 WheelPickerCore.defaultProps = {
-	extendValuesTime: 4,
+	expandSize: 4,
+	alwaysExpand: true,
 	name: null,
 	selectedIndex: 0,
 	valueFormater: val => val,
