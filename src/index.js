@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import TimePickerInput from './time_picker/TimePickerInput';
+import TimePickerInput from './js/time_picker/TimePickerInput';
 
 const rootElement = document.getElementById('root');
 ReactDOM.render(
