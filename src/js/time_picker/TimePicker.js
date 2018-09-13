@@ -205,12 +205,16 @@ export default class TimePicker extends React.Component {
 
 			switch (name) {
 				case 'hour':
-					if (meridiem == null || meridiem === AM) {
-						newDateValue.setHours(newValue);
-					} else {
+					if (meridiem === AM) {
+						newDateValue.setHours(newValue === 12 ? 0 : newValue);
+					} else if (meridiem === PM) {
 						// Date object supports only 24 hour format, so in case user
 						// select PM we need to add 12 hours to selected hours
-						newDateValue.setHours(newValue + 12);
+						newDateValue.setHours(
+							newValue === 12 ? 12 : newValue + 12
+						);
+					} else {
+						newDateValue.setHours(newValue);
 					}
 					break;
 				case 'minute':
