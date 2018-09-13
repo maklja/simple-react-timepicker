@@ -5,6 +5,8 @@ import dateformat from 'dateformat';
 import TimePicker from './TimePicker';
 import { isFunction, roundDate } from '../utils/helper';
 
+import '../../assets/css/time_picker/time_picker_input.css';
+
 export default class TimePickerInput extends React.Component {
 	constructor(props) {
 		super(props);
@@ -40,11 +42,11 @@ export default class TimePickerInput extends React.Component {
 	}
 
 	render() {
-		const { readOnly, disabled } = this.props;
+		const { readOnly, disabled, useOverlay } = this.props;
 		const { formatedValue, visible, value } = this.state;
 
 		return (
-			<div className="time-picker-input">
+			<div className={`time-picker-input ${useOverlay ? 'overlay' : ''}`}>
 				<div>
 					<input
 						type="text"
@@ -125,6 +127,7 @@ export default class TimePickerInput extends React.Component {
 	}
 
 	componentWillUnmount() {
+		window.removeEventListener('click', this._hideTimePicker);
 		clearTimeout(this._removeFocus);
 	}
 
@@ -146,6 +149,7 @@ TimePickerInput.propTypes = {
 	...TimePicker.propTypes,
 	defaultFormat: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
 	readOnly: PropTypes.bool,
+	useOverlay: PropTypes.bool,
 	onOpen: PropTypes.func,
 	onClose: PropTypes.func
 };
@@ -154,6 +158,7 @@ TimePickerInput.defaultProps = {
 	...TimePicker.defaultProps,
 	defaultFormat: use12HourFormat =>
 		use12HourFormat ? 'hh:MM:ss.l TT' : 'HH:MM:ss.l',
+	useOverlay: false,
 	onOpen: () => {},
 	onClose: () => {}
 };

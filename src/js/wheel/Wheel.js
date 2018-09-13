@@ -27,6 +27,7 @@ export const Wheel = ({
 				transform: `translateY(${translate}px)`,
 				touchAction: 'none' // TODO move
 			}}
+			className="wheel"
 		>
 			<div className="offset-div" style={{ marginTop: offsetHeight }} />
 			{values.map((curVal, i) => (

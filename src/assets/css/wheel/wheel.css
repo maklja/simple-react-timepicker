@@ -18,8 +18,12 @@
 	position: absolute;
 	height: 100%;
 	z-index: 1;
-	overflow: hidden;
-	background-color: #252525;
+	overflow: hidden; 
+}
+
+
+.wheel-picker .wheel:focus {
+	outline: none !important;
 }
 
 .choose-started .wheel-picker {

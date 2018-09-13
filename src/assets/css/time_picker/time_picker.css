@@ -12,6 +12,6 @@
 	font-weight: bold;
 }
 
-.time-picker-input .holder {
-	display: inline-block;
+.time-picker .current-value {
+	background-color: #252525;
 }

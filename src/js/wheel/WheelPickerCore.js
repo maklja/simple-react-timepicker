@@ -18,7 +18,9 @@ import {
 	isInsideElement
 } from './calc_func';
 
-import './styles.css';
+import '../../assets/css/wheel/wheel.css';
+
+const EXTEND_PADDING = 8;
 
 export default class WheelPickerCore extends React.Component {
 	constructor(props) {
@@ -82,16 +84,14 @@ export default class WheelPickerCore extends React.Component {
 			dragStarted
 		} = this.state;
 
+		const expanded = dragStarted || alwaysExpand;
 		// is component is in  choose mode we need to calculate the view port so the user can
 		// see more vvalues from the wheel
-		const chooseStyle =
-			dragStarted || alwaysExpand ? this._getChooseStyle() : {};
+		const chooseStyle = expanded ? this._getChooseStyle() : {};
 		// if choose started we need to translate whole view port up so the selectet value
 		// stays in the middle while active values are visible around it
-		const activeDelta =
-			dragStarted || alwaysExpand ? elementHeight * expandSize : 0;
-		const dragStartedClass =
-			dragStarted || alwaysExpand ? 'choose-started' : '';
+		const activeDelta = expanded ? elementHeight * expandSize : 0;
+		const dragStartedClass = expanded ? 'choose-started' : '';
 
 		const translateY = translate + activeDelta;
 		const visibleValues = sliceAroundMiddle(values, expandSize * 2);
@@ -534,7 +534,8 @@ export default class WheelPickerCore extends React.Component {
 		);
 
 		return {
-			height: `${elementHeight * (2 * expandSize + 1)}px`,
+			height: `${elementHeight * (2 * expandSize + 1) +
+				EXTEND_PADDING}px`,
 			marginTop: `-${offsetTop - offsetBottom}px`
 		};
 	}
@@ -597,7 +598,7 @@ WheelPickerCore.propTypes = {
 
 WheelPickerCore.defaultProps = {
 	expandSize: 4,
-	alwaysExpand: true,
+	alwaysExpand: false,
 	name: null,
 	selectedIndex: 0,
 	valueFormater: val => val,

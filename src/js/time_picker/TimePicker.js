@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { generateArrayValues, timeFormater, roundDate } from '../utils/helper';
 import WheelPicker from '../wheel/WheelPicker';
 
-import './style.css';
+import '../../assets/css/time_picker/time_picker.css';
 
 const MERIDIEMS = { AM: 'AM', PM: 'PM' };
 const { AM, PM } = MERIDIEMS;
@@ -163,7 +163,11 @@ export default class TimePicker extends React.Component {
 				) : (
 					''
 				)}
-
+				{use12Hours && showHour ? (
+					<div className="cell split"> </div>
+				) : (
+					''
+				)}
 				{use12Hours && showHour ? (
 					<div className="cell">
 						<WheelPicker

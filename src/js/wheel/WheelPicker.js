@@ -29,7 +29,8 @@ export default class WheelPicker extends React.Component {
 			selectedIndex,
 			onChange,
 			name,
-			chooseValuesNumber
+			expandSize,
+			alwaysExpand
 		} = this.props;
 		const { dragStarted } = this.state;
 
@@ -38,14 +39,18 @@ export default class WheelPicker extends React.Component {
 				<Button
 					disabled={disabled}
 					onClick={this._wheelMove}
-					visible={showButtons && dragStarted === false}
+					visible={
+						showButtons &&
+						dragStarted === false &&
+						alwaysExpand === false
+					}
 				/>
 				<WheelPickerCore
 					name={name}
 					ref={el => (this._wheelPicker = el)}
 					values={values}
 					selectedIndex={selectedIndex}
-					extendValuesTime={chooseValuesNumber}
+					extendValuesTime={expandSize}
 					enableAnimation={enableAnimation}
 					valueFormater={valueFormater}
 					onWheel={this._onWheel}
@@ -54,12 +59,17 @@ export default class WheelPicker extends React.Component {
 					onChange={onChange}
 					onDragStarted={this._onDragStarted}
 					onDragStoped={this._onDragStoped}
+					alwaysExpand={alwaysExpand}
 				/>
 				<Button
 					disabled={disabled}
 					direction={DIRECTION.DOWN}
 					onClick={this._wheelMove}
-					visible={showButtons && dragStarted === false}
+					visible={
+						showButtons &&
+						dragStarted === false &&
+						alwaysExpand === false
+					}
 				/>
 			</div>
 		);
@@ -118,9 +128,10 @@ WheelPicker.propTypes = {
 		PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 	).isRequired,
 	selectedIndex: PropTypes.number,
-	chooseValuesNumber: PropTypes.number,
+	expandSize: PropTypes.number,
 	valueFormater: PropTypes.func,
 	showButtons: PropTypes.bool,
+	alwaysExpand: PropTypes.bool,
 	enableAnimation: PropTypes.bool,
 	disabled: PropTypes.bool,
 	onChange: PropTypes.func,
@@ -130,9 +141,10 @@ WheelPicker.propTypes = {
 WheelPicker.defaultProps = {
 	name: '',
 	selectedIndex: 0,
-	chooseValuesNumber: 4,
+	expandSize: 4,
 	valueFormater: val => val,
 	showButtons: true,
+	alwaysExpand: false,
 	enableAnimation: true,
 	disabled: false,
 	onChange: () => {},
