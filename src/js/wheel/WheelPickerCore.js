@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { WheelPickerBody } from './Wheel';
+import WheelPickerBody from './Wheel';
 
 import { getWindowSize } from '../utils/helper';
 import {
@@ -85,6 +85,7 @@ export default class WheelPickerCore extends React.Component {
 		} = this.state;
 
 		const expanded = dragStarted || alwaysExpand;
+
 		// is component is in  choose mode we need to calculate the view port so the user can
 		// see more vvalues from the wheel
 		const chooseStyle = expanded ? this._getChooseStyle() : {};
@@ -130,7 +131,25 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	componentDidMount() {
-		this._calculateElementValueSize();
+		this.setState((prevState, props) => {
+			const { alwaysExpand } = props;
+			const translateState = this._getWheelSize(this._valuePickerEl);
+			if (alwaysExpand) {
+				const { values, offsetHeight } = prevState;
+				const finalState =
+					this._checkInsufficientSpace({
+						...translateState,
+						values,
+						offsetHeight
+					}) || translateState;
+
+				return {
+					...finalState
+				};
+			} else {
+				return { ...translateState };
+			}
+		});
 		window.addEventListener('touchstart', this.collapse);
 	}
 
@@ -144,14 +163,14 @@ export default class WheelPickerCore extends React.Component {
 		this._onDragStop();
 	}
 
-	_calculateElementValueSize() {
+	_getWheelSize(el) {
 		// we must have reference to wheel DOM top element in order to calculate size of the single value inside of it
-		if (this._valuePickerEl == null) {
+		if (el == null) {
 			throw new Error('Reference to mandatory DOM element not found');
 		}
 		// first div in children, called offset-div is used to provide well offset during translation
 		// and shouldn't be included in calculations
-		const valuesChildren = Array.from(this._valuePickerEl.children).filter(
+		const valuesChildren = Array.from(el.children).filter(
 			curEl => curEl.classList.contains('offset-div') === false
 		);
 		// get container of each value and calculate accumulator of height
@@ -167,11 +186,11 @@ export default class WheelPickerCore extends React.Component {
 			elementHeight
 		);
 
-		this.setState({
+		return {
 			translate: startPosition,
 			elementHeight,
 			selectedIndex: Math.abs(startPosition / elementHeight)
-		});
+		};
 	}
 
 	_extendValues(values, maxLength, selectedIndex) {
@@ -238,7 +257,6 @@ export default class WheelPickerCore extends React.Component {
 			values,
 			offsetHeight
 		} = state;
-
 		const { expandSize } = this.props;
 
 		// get available spaces before and after wheel
@@ -538,6 +556,31 @@ export default class WheelPickerCore extends React.Component {
 				EXTEND_PADDING}px`,
 			marginTop: `-${offsetTop - offsetBottom}px`
 		};
+	}
+
+	componentDidUpdate(props, prevState) {
+		const oldElementHeight = prevState.elementHeight;
+		const { elementHeight, translate } = this._getWheelSize(
+			this._valuePickerEl
+		);
+
+		if (elementHeight && oldElementHeight !== elementHeight) {
+			// get available spaces before and after wheel
+			// const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
+			// 	elementHeight,
+			// 	4,
+			// 	this._el.getBoundingClientRect(),
+			// 	getWindowSize()
+			// );
+
+			// console.log(maxSpaceTop, this.state.selectedIndex);
+
+			this.setState({
+				translate: translate,
+				offsetHeight: 0,
+				elementHeight: elementHeight
+			});
+		}
 	}
 
 	_getHighlightedIndex() {
