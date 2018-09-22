@@ -7,6 +7,8 @@ import { isFunction, roundDate } from '../utils/helper';
 
 import '../../assets/css/time_picker/time_picker_input.css';
 
+const BLUR_TIMEOUT = 200; // ms
+
 export default class TimePickerInput extends React.Component {
 	constructor(props) {
 		super(props);
@@ -90,7 +92,7 @@ export default class TimePickerInput extends React.Component {
 		this._removeFocus = setTimeout(() => {
 			this._hideTimePicker();
 			this._removeFocus = null;
-		}, 100);
+		}, BLUR_TIMEOUT);
 	}
 
 	_onChange(e) {

@@ -44,6 +44,7 @@ export default class TimePicker extends React.Component {
 
 	render() {
 		const {
+			alwaysExpand,
 			id,
 			use12Hours,
 			stepHour,
@@ -104,6 +105,7 @@ export default class TimePicker extends React.Component {
 							onChange={this._onValueChange}
 							selectedIndex={hour}
 							onExpand={this._onWheelExpended}
+							alwaysExpand={alwaysExpand}
 						/>
 					</div>
 				) : (
@@ -122,6 +124,7 @@ export default class TimePicker extends React.Component {
 							onChange={this._onValueChange}
 							selectedIndex={minute}
 							onExpand={this._onWheelExpended}
+							alwaysExpand={alwaysExpand}
 						/>
 					</div>
 				) : (
@@ -140,6 +143,7 @@ export default class TimePicker extends React.Component {
 							onChange={this._onValueChange}
 							selectedIndex={second}
 							onExpand={this._onWheelExpended}
+							alwaysExpand={alwaysExpand}
 						/>
 					</div>
 				) : (
@@ -158,6 +162,7 @@ export default class TimePicker extends React.Component {
 							onChange={this._onValueChange}
 							selectedIndex={millisecond}
 							onExpand={this._onWheelExpended}
+							alwaysExpand={alwaysExpand}
 						/>
 					</div>
 				) : (
@@ -179,6 +184,7 @@ export default class TimePicker extends React.Component {
 							onChange={this._onValueChange}
 							selectedIndex={meridiem}
 							onExpand={this._onWheelExpended}
+							alwaysExpand={alwaysExpand}
 						/>
 					</div>
 				) : (
@@ -266,6 +272,7 @@ export default class TimePicker extends React.Component {
 }
 
 TimePicker.propTypes = {
+	alwaysExpand: PropTypes.bool,
 	id: PropTypes.string,
 	use12Hours: PropTypes.bool,
 	stepHour: PropTypes.number,
@@ -288,6 +295,7 @@ TimePicker.propTypes = {
 };
 
 TimePicker.defaultProps = {
+	alwaysExpand: false,
 	id: null,
 	use12Hours: false,
 	stepHour: 1,

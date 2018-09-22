@@ -127,8 +127,7 @@ export const WheelPickerBody = ({
 	return (
 		<div
 			style={{
-				maxHeight: `${elementHeight}px`,
-				height: `${elementHeight}px`
+				height: ` ${elementHeight}px`
 			}}
 			className="wheel-picker"
 			onKeyDown={onKeyDown}
@@ -141,7 +140,6 @@ export const WheelPickerBody = ({
 			<div
 				className="current-value"
 				style={{
-					minHeight: `${elementHeight}px`,
 					...currentValueStyle
 				}}
 			>
@@ -204,3 +202,5 @@ WheelPickerBody.defaultProps = {
 	onTouchEnd: () => {},
 	onTouchCancel: () => {}
 };
+
+export default WheelPickerBody;

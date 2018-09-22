@@ -8,15 +8,18 @@ import {
 	sliceAroundMiddle,
 	arrayRotate,
 	duplicateArrayValues,
-	roundValueByStep,
 	nextTranslate,
 	nextOffset,
 	windowAvailableSpace,
-	translateInsufficientSpace,
-	convertPostionToTranslate,
-	nextTranslateDelta,
-	isInsideElement
+	isInsideElement,
+	getWheelInfo,
+	checkInsufficientSpace
 } from './calc_func';
+
+import PrepairChooseState from './states/PrepairChooseState';
+import DragStartedState from './states/DragStartedState';
+import DragStopedState from './states/DragStopedState';
+import DragingState from './states/DragingState';
 
 import '../../assets/css/wheel/wheel.css';
 
@@ -37,6 +40,7 @@ export default class WheelPickerCore extends React.Component {
 		this.state = {
 			translate: 0,
 			elementHeight: 0,
+			selectedElementHeight: 0,
 			expandSize,
 			values: expandedValues,
 			offsetHeight: 0,
@@ -49,7 +53,12 @@ export default class WheelPickerCore extends React.Component {
 			// after its value becomes greater then element height it will be restarted to zero
 			// this way we can track over how many elements we passed during draging gesture
 			// and ability to calculate currently selected value
-			dragCrossed: 0
+			dragCrossed: 0,
+			// there are two stages when we activate choose
+			// first stage is only to add choose class to wheel and get current BoundingRect of selected
+			// element and the second stage is reposition of the value elements so that selected value
+			// stay at same position
+			prepairChoose: false
 		};
 
 		this._touchActive = false;
@@ -65,89 +74,35 @@ export default class WheelPickerCore extends React.Component {
 		this._onTouchMove = this._onTouchMove.bind(this);
 		this._onTouchEnd = this._onTouchEnd.bind(this);
 		this._onTouchCancel = this._onTouchCancel.bind(this);
-	}
-
-	render() {
-		const {
-			valueFormater,
-			enableAnimation,
-			disabled,
-			alwaysExpand
-		} = this.props;
-
-		const {
-			translate,
-			elementHeight,
-			expandSize,
-			values,
-			offsetHeight,
-			dragStarted
-		} = this.state;
-
-		const expanded = dragStarted || alwaysExpand;
-
-		// is component is in  choose mode we need to calculate the view port so the user can
-		// see more vvalues from the wheel
-		const chooseStyle = expanded ? this._getChooseStyle() : {};
-		// if choose started we need to translate whole view port up so the selectet value
-		// stays in the middle while active values are visible around it
-		const activeDelta = expanded ? elementHeight * expandSize : 0;
-		const dragStartedClass = expanded ? 'choose-started' : '';
-
-		const translateY = translate + activeDelta;
-		const visibleValues = sliceAroundMiddle(values, expandSize * 2);
-
-		return (
-			<div
-				ref={el => (this._el = el)}
-				className={`wheel-holder ${dragStartedClass}`}
-			>
-				<WheelPickerBody
-					values={visibleValues}
-					selectedIndex={this._getHighlightedIndex()}
-					onElementCreated={el => (this._valuePickerEl = el)}
-					elementHeight={elementHeight}
-					animation={
-						enableAnimation && this._isDragStarted() === false
-					}
-					offsetHeight={offsetHeight}
-					valueFormater={valueFormater}
-					translate={translateY}
-					onTouchStart={this._onTouchStart}
-					onTouchEnd={this._onTouchEnd}
-					onTouchMove={this._onTouchMove}
-					onTouchCancel={this._onTouchCancel}
-					onMouseDown={this._onMouseDown}
-					onMouseMove={this._onMouseMove}
-					onMouseUp={this._onMouseUp}
-					onMouseLeave={this._onMouseLeave}
-					onWheel={this._onWheel}
-					disabled={disabled}
-					onKeyDown={this._onKeyDown}
-					currentValueStyle={chooseStyle}
-				/>
-			</div>
-		);
+		this.setState = this.setState.bind(this);
 	}
 
 	componentDidMount() {
 		this.setState((prevState, props) => {
-			const { alwaysExpand } = props;
-			const translateState = this._getWheelSize(this._valuePickerEl);
-			if (alwaysExpand) {
-				const { values, offsetHeight } = prevState;
-				const finalState =
-					this._checkInsufficientSpace({
-						...translateState,
-						values,
-						offsetHeight
-					}) || translateState;
+			const { alwaysExpand, expandSize } = props;
+			const translateState = getWheelInfo(this._valuePickerEl);
 
-				return {
-					...finalState
+			if (alwaysExpand) {
+				const { values } = prevState;
+				const finalState = {
+					prepairChoose: true,
+					selectedElementHeight: translateState.elementHeight,
+					...translateState,
+					...checkInsufficientSpace(
+						this._el.getBoundingClientRect(),
+						translateState.selectedIndex,
+						translateState.elementHeight,
+						values,
+						expandSize
+					)
 				};
+
+				return finalState;
 			} else {
-				return { ...translateState };
+				return {
+					...translateState,
+					selectedElementHeight: translateState.elementHeight
+				};
 			}
 		});
 		window.addEventListener('touchstart', this.collapse);
@@ -161,36 +116,6 @@ export default class WheelPickerCore extends React.Component {
 	collapse() {
 		this._touchActive = false;
 		this._onDragStop();
-	}
-
-	_getWheelSize(el) {
-		// we must have reference to wheel DOM top element in order to calculate size of the single value inside of it
-		if (el == null) {
-			throw new Error('Reference to mandatory DOM element not found');
-		}
-		// first div in children, called offset-div is used to provide well offset during translation
-		// and shouldn't be included in calculations
-		const valuesChildren = Array.from(el.children).filter(
-			curEl => curEl.classList.contains('offset-div') === false
-		);
-		// get container of each value and calculate accumulator of height
-		const valuesElementsSize = valuesChildren.reduce(
-			(accumulator, curEl) => accumulator + curEl.offsetHeight,
-			0
-		);
-
-		// calculate single element height
-		const elementHeight = valuesElementsSize / valuesChildren.length;
-		const startPosition = roundValueByStep(
-			-valuesElementsSize / 2,
-			elementHeight
-		);
-
-		return {
-			translate: startPosition,
-			elementHeight,
-			selectedIndex: Math.abs(startPosition / elementHeight)
-		};
 	}
 
 	_extendValues(values, maxLength, selectedIndex) {
@@ -249,40 +174,11 @@ export default class WheelPickerCore extends React.Component {
 		onChange(values[selectedValueIndex], name);
 	}
 
-	_checkInsufficientSpace(state, direction = 1) {
-		const {
-			selectedIndex,
-			elementHeight,
-			translate,
-			values,
-			offsetHeight
-		} = state;
-		const { expandSize } = this.props;
-
-		// get available spaces before and after wheel
-		const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
-			elementHeight,
-			expandSize,
-			this._el.getBoundingClientRect(),
-			getWindowSize()
-		);
-
-		return (
-			translateInsufficientSpace(
-				values,
-				translate,
-				offsetHeight,
-				direction,
-				selectedIndex,
-				elementHeight,
-				expandSize,
-				maxSpaceBottom,
-				maxSpaceTop
-			) || state
-		);
-	}
-
 	_onTouchStart(e) {
+		if (this._isDisabled()) {
+			return;
+		}
+
 		if (e.changedTouches && e.changedTouches.length === 1) {
 			e.stopPropagation();
 			e.preventDefault();
@@ -412,23 +308,28 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	_onDragStart(position) {
-		this.setState(
-			prevState => {
-				const { dragStarted } = prevState;
-				const translateState = dragStarted
-					? {}
-					: this._checkInsufficientSpace(prevState);
-				return {
-					...translateState,
-					dragStarted: true,
-					dragStartPosition: position
-				};
-			},
-			() => {
+		const prepairChooseState = new PrepairChooseState(
+			this.setState,
+			this._valuePickerEl,
+			true
+		);
+		prepairChooseState
+			.executeState()
+			.then(prepairBoundingRect => {
+				const dragStartedState = new DragStartedState(
+					this.setState,
+					this._valuePickerEl,
+					this._el,
+					prepairBoundingRect,
+					position
+				);
+
+				return dragStartedState.executeState();
+			})
+			.then(() => {
 				const { onDragStarted, name } = this.props;
 				onDragStarted(name);
-			}
-		);
+			});
 	}
 
 	_onDrag(position) {
@@ -436,60 +337,8 @@ export default class WheelPickerCore extends React.Component {
 			return;
 		}
 
-		this.setState(prevState => {
-			let {
-				dragStartPosition,
-				values,
-				elementHeight,
-				translate,
-				dragCrossed,
-				offsetHeight
-			} = prevState;
-			// calculate distance between prevous position and current one
-			// and translate component by that value
-			const newTranslate = convertPostionToTranslate(
-				position,
-				dragStartPosition,
-				translate
-			);
-			const newDelta = nextTranslateDelta(
-				dragCrossed,
-				newTranslate,
-				translate
-			);
-
-			// pass to the next value if we crossed half path of element height
-			// this way we can select next element without need to drag whole element
-			// height to select next value
-			if (Math.abs(newDelta) > elementHeight / 2) {
-				const direction = Math.sign(newDelta);
-				// n is number of elements we crossed during draging gesture
-				// it is posible that we passed multiple elements if we
-				// drag "too fast"
-				const n = Math.round(Math.abs(newDelta / elementHeight));
-
-				return {
-					translate: newTranslate,
-					dragStartPosition: position,
-					dragCrossed: newDelta - elementHeight * direction * n,
-					values: arrayRotate(values, direction > 0, n),
-					offsetHeight: nextOffset(
-						offsetHeight,
-						elementHeight,
-						direction,
-						n
-					)
-				};
-			} else {
-				return {
-					translate: newTranslate,
-					dragStartPosition: position,
-					dragCrossed: newDelta,
-					values: values,
-					offsetHeight: offsetHeight
-				};
-			}
-		});
+		const dragingState = new DragingState(this.setState, position);
+		dragingState.executeState();
 	}
 
 	_onDragStop(dragContinue = false) {
@@ -497,46 +346,30 @@ export default class WheelPickerCore extends React.Component {
 			return;
 		}
 
-		this.setState(
-			prevState => {
-				const { elementHeight, dragCrossed } = prevState;
+		const prepairChooseState = new PrepairChooseState(
+			this.setState,
+			this._valuePickerEl,
+			dragContinue
+		);
+		prepairChooseState
+			.executeState()
+			.then(prepairBoundingRect => {
+				const dragStopedState = new DragStopedState(
+					this.setState,
+					this._valuePickerEl,
+					this._el,
+					dragContinue,
+					prepairBoundingRect
+				);
 
-				const {
-					translate,
-					values,
-					offsetHeight,
-					selectedIndex
-				} = dragContinue
-					? prevState
-					: this._checkInsufficientSpace(prevState, -1);
-
-				return {
-					dragStarted: dragContinue,
-					// we need to round position because current translated distance
-					// wont fit in current value div, so we need to round it up
-					// for example if single value height is 29 px, translation point must
-					// go 29px, 58px, 87px and so on, this will ensure that currently selected value
-					// is always visible
-					translate: roundValueByStep(
-						// because draging can interapted at any time
-						// we need to include current draging distance
-						// to avoid rounding errors
-						translate - dragCrossed,
-						elementHeight
-					),
-					dragCrossed: 0,
-					values,
-					offsetHeight,
-					selectedIndex
-				};
-			},
-			() => {
+				return dragStopedState.executeState();
+			})
+			.then(() => {
 				if (dragContinue === false) {
 					this.props.onDragStoped();
 					this._onValueChanged();
 				}
-			}
-		);
+			});
 	}
 
 	_getChooseStyle() {
@@ -556,31 +389,6 @@ export default class WheelPickerCore extends React.Component {
 				EXTEND_PADDING}px`,
 			marginTop: `-${offsetTop - offsetBottom}px`
 		};
-	}
-
-	componentDidUpdate(props, prevState) {
-		const oldElementHeight = prevState.elementHeight;
-		const { elementHeight, translate } = this._getWheelSize(
-			this._valuePickerEl
-		);
-
-		if (elementHeight && oldElementHeight !== elementHeight) {
-			// get available spaces before and after wheel
-			// const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
-			// 	elementHeight,
-			// 	4,
-			// 	this._el.getBoundingClientRect(),
-			// 	getWindowSize()
-			// );
-
-			// console.log(maxSpaceTop, this.state.selectedIndex);
-
-			this.setState({
-				translate: translate,
-				offsetHeight: 0,
-				elementHeight: elementHeight
-			});
-		}
 	}
 
 	_getHighlightedIndex() {
@@ -614,6 +422,72 @@ export default class WheelPickerCore extends React.Component {
 
 	_isTouchActive() {
 		return this._touchActive;
+	}
+
+	render() {
+		const {
+			valueFormater,
+			enableAnimation,
+			disabled,
+			alwaysExpand
+		} = this.props;
+
+		const {
+			translate,
+			elementHeight,
+			expandSize,
+			values,
+			offsetHeight,
+			dragStarted,
+			prepairChoose,
+			selectedElementHeight
+		} = this.state;
+
+		const expanded = dragStarted || alwaysExpand;
+		const chooseStarted = prepairChoose || alwaysExpand;
+
+		// is component is in  choose mode we need to calculate the view port so the user can
+		// see more vvalues from the wheel
+		const chooseStyle = expanded ? this._getChooseStyle() : {};
+		// if choose started we need to translate whole view port up so the selectet value
+		// stays in the middle while active values are visible around it
+		const activeDelta = expanded ? elementHeight * expandSize : 0;
+		const dragStartedClass = chooseStarted ? 'choose-started' : '';
+
+		const translateY = translate + activeDelta;
+		const visibleValues = sliceAroundMiddle(values, expandSize * 2);
+
+		return (
+			<div
+				ref={el => (this._el = el)}
+				className={`wheel-holder ${dragStartedClass}`}
+			>
+				<WheelPickerBody
+					values={visibleValues}
+					selectedIndex={this._getHighlightedIndex()}
+					onElementCreated={el => (this._valuePickerEl = el)}
+					elementHeight={selectedElementHeight}
+					animation={
+						enableAnimation && this._isDragStarted() === false
+					}
+					offsetHeight={offsetHeight}
+					valueFormater={valueFormater}
+					translate={translateY}
+					onTouchStart={this._onTouchStart}
+					onTouchEnd={this._onTouchEnd}
+					onTouchMove={this._onTouchMove}
+					onTouchCancel={this._onTouchCancel}
+					onMouseDown={this._onMouseDown}
+					onMouseMove={this._onMouseMove}
+					onMouseUp={this._onMouseUp}
+					onMouseLeave={this._onMouseLeave}
+					onWheel={this._onWheel}
+					disabled={disabled}
+					onKeyDown={this._onKeyDown}
+					currentValueStyle={chooseStyle}
+				/>
+			</div>
+		);
 	}
 }
 

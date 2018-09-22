@@ -1,3 +1,5 @@
+import { getWindowSize } from '../../utils/helper';
+
 export const sliceAroundMiddle = (values, n) => {
 	const middleValueIndex = Math.round(values.length / 2);
 	const beginIndex = middleValueIndex - n;
@@ -83,11 +85,8 @@ export const windowAvailableSpace = (
 
 export const translateInsufficientBottomSpace = (
 	values,
-	translate,
-	offset,
 	direction,
 	selectedIndex,
-	elementHeight,
 	n,
 	maxSpace
 ) => {
@@ -97,15 +96,6 @@ export const translateInsufficientBottomSpace = (
 	const spaceDelta = n - maxSpace;
 
 	return {
-		// translate to new value
-		translate: nextTranslate(
-			translate,
-			elementHeight,
-			direction,
-			spaceDelta
-		),
-		// change offset to simulate animation transition
-		offsetHeight: nextOffset(offset, elementHeight, direction, spaceDelta),
 		// rotate values for n places in order to position at new value
 		values: arrayRotate(values, direction > 0, spaceDelta),
 		// new selected index
@@ -115,26 +105,14 @@ export const translateInsufficientBottomSpace = (
 
 export const translateInsufficientTopSpace = (
 	values,
-	translate,
-	offset,
 	direction,
 	selectedIndex,
-	elementHeight,
 	n,
 	maxSpace
 ) => {
 	const spaceDelta = n - maxSpace;
 
 	return {
-		// translate to new value
-		translate: nextTranslate(
-			translate,
-			elementHeight,
-			-direction,
-			spaceDelta
-		),
-		// change offset to simulate animation transition
-		offsetHeight: nextOffset(offset, elementHeight, -direction, spaceDelta),
 		// rotate values for n places in order to position at new value
 		values: arrayRotate(values, -direction > 0, spaceDelta),
 		// new selected index
@@ -144,11 +122,8 @@ export const translateInsufficientTopSpace = (
 
 export const translateInsufficientSpace = (
 	values,
-	translate,
-	offset,
 	direction,
 	selectedIndex,
-	elementHeight,
 	n,
 	maxSpaceBottom,
 	maxSpaceTop
@@ -156,11 +131,8 @@ export const translateInsufficientSpace = (
 	if (maxSpaceBottom !== n) {
 		return translateInsufficientBottomSpace(
 			values,
-			translate,
-			offset,
 			direction,
 			selectedIndex,
-			elementHeight,
 			n,
 			maxSpaceBottom
 		);
@@ -168,17 +140,40 @@ export const translateInsufficientSpace = (
 	} else if (maxSpaceTop !== n) {
 		return translateInsufficientTopSpace(
 			values,
-			translate,
-			offset,
 			direction,
 			selectedIndex,
-			elementHeight,
 			n,
 			maxSpaceTop
 		);
 	}
 
 	return null;
+};
+
+export const checkInsufficientSpace = (
+	elementBoundingRect,
+	selectedIndex,
+	elementHeight,
+	values,
+	expandSize,
+	direction = 1
+) => {
+	// get available spaces before and after wheel
+	const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
+		elementHeight,
+		expandSize,
+		elementBoundingRect,
+		getWindowSize()
+	);
+
+	return translateInsufficientSpace(
+		values,
+		direction,
+		selectedIndex,
+		expandSize,
+		maxSpaceBottom,
+		maxSpaceTop
+	);
 };
 
 export const convertPostionToTranslate = (
@@ -192,3 +187,51 @@ export const nextTranslateDelta = (prevDelta, newTranslate, prevTranslate) =>
 
 export const isInsideElement = (elementTop, elementHeight, positionY) =>
 	elementTop <= positionY && positionY <= elementTop + elementHeight;
+
+export const getValueElementByIndex = (el, i) => {
+	if (el == null) {
+		throw new Error('Reference to mandatory DOM element not found');
+	}
+
+	if (i < 0) {
+		throw new Error(`Invalid index value ${i}. Value must be >= 0`);
+	}
+
+	// first div in children, called offset-div is used to provide wheel offset during translation
+	// and shouldn't be included
+	const valuesChildren = Array.from(el.children).filter(
+		curEl => curEl.classList.contains('offset-div') === false
+	);
+
+	return valuesChildren[i];
+};
+
+export const getWheelInfo = el => {
+	// we must have reference to wheel DOM top element in order to calculate size of the single value inside of it
+	if (el == null) {
+		throw new Error('Reference to mandatory DOM element not found');
+	}
+	// first div in children, called offset-div is used to provide well offset during translation
+	// and shouldn't be included in calculations
+	const valuesChildren = Array.from(el.children).filter(
+		curEl => curEl.classList.contains('offset-div') === false
+	);
+	// get container of each value and calculate accumulator of height
+	const valuesElementsSize = valuesChildren.reduce(
+		(accumulator, curEl) => accumulator + curEl.offsetHeight,
+		0
+	);
+
+	// calculate single element height
+	const elementHeight = valuesElementsSize / valuesChildren.length;
+	const startPosition = roundValueByStep(
+		-valuesElementsSize / 2,
+		elementHeight
+	);
+
+	return {
+		translate: startPosition,
+		elementHeight,
+		selectedIndex: Math.round(valuesChildren.length / 2)
+	};
+};
