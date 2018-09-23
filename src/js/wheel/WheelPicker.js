@@ -30,7 +30,8 @@ export default class WheelPicker extends React.Component {
 			onChange,
 			name,
 			expandSize,
-			alwaysExpand
+			alwaysExpand,
+			maintainSelectedValuePosition
 		} = this.props;
 		const { dragStarted } = this.state;
 
@@ -60,6 +61,9 @@ export default class WheelPicker extends React.Component {
 					onDragStarted={this._onDragStarted}
 					onDragStoped={this._onDragStoped}
 					alwaysExpand={alwaysExpand}
+					maintainSelectedValuePosition={
+						maintainSelectedValuePosition
+					}
 				/>
 				<Button
 					disabled={disabled}
@@ -134,6 +138,7 @@ WheelPicker.propTypes = {
 	alwaysExpand: PropTypes.bool,
 	enableAnimation: PropTypes.bool,
 	disabled: PropTypes.bool,
+	maintainSelectedValuePosition: PropTypes.bool,
 	onChange: PropTypes.func,
 	onExpand: PropTypes.func
 };
@@ -147,6 +152,7 @@ WheelPicker.defaultProps = {
 	alwaysExpand: false,
 	enableAnimation: true,
 	disabled: false,
+	maintainSelectedValuePosition: true,
 	onChange: () => {},
 	onExpand: () => {}
 };

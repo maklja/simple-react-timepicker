@@ -24,7 +24,9 @@ export default class DragStopedState extends ChainState {
 
 	changeState() {
 		return (prevState, props) => {
-			if (this._dragContinue) {
+			const { expandSize, alwaysExpand } = props;
+
+			if (this._dragContinue || alwaysExpand) {
 				return {
 					// we need to round position because current translated distance
 					// wont fit in current value div, so we need to round it up
@@ -43,7 +45,6 @@ export default class DragStopedState extends ChainState {
 					dragCrossed: 0
 				};
 			} else {
-				const { expandSize } = props;
 				const { values, selectedIndex } = prevState;
 				const { elementHeight } = getWheelInfo(this._wheelElement);
 

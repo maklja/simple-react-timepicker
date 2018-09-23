@@ -13,7 +13,8 @@ import {
 	windowAvailableSpace,
 	isInsideElement,
 	getWheelInfo,
-	checkInsufficientSpace
+	checkInsufficientSpace,
+	getValueElementByIndex
 } from './calc_func';
 
 import PrepairChooseState from './states/PrepairChooseState';
@@ -83,22 +84,29 @@ export default class WheelPickerCore extends React.Component {
 
 	componentDidMount() {
 		this.setState((prevState, props) => {
-			const { alwaysExpand, expandSize } = props;
+			const {
+				alwaysExpand,
+				expandSize,
+				maintainSelectedValuePosition
+			} = props;
 			const translateState = getWheelInfo(this._valuePickerEl);
 
 			if (alwaysExpand) {
 				const { values } = prevState;
+				const insufficientSpaceState = maintainSelectedValuePosition
+					? checkInsufficientSpace(
+							this._el.getBoundingClientRect(),
+							translateState.selectedIndex,
+							translateState.elementHeight,
+							values,
+							expandSize
+					  )
+					: {};
 				const finalState = {
 					prepairChoose: true,
 					selectedElementHeight: translateState.elementHeight,
 					...translateState,
-					...checkInsufficientSpace(
-						this._el.getBoundingClientRect(),
-						translateState.selectedIndex,
-						translateState.elementHeight,
-						values,
-						expandSize
-					)
+					...insufficientSpaceState
 				};
 
 				return finalState;
@@ -218,23 +226,25 @@ export default class WheelPickerCore extends React.Component {
 			return;
 		}
 
-		const { changedTouches, currentTarget } = e;
+		const { changedTouches } = e;
 
 		if (changedTouches && changedTouches.length === 1) {
 			e.stopPropagation();
 			e.preventDefault();
 
-			const { elementHeight } = this.state;
+			// get selected element
+			const { top, height } = getValueElementByIndex(
+				this._valuePickerEl,
+				this.state.selectedIndex
+			).getBoundingClientRect();
 
-			// current target is wheel main center div
-			const { top } = currentTarget.getBoundingClientRect();
 			// position of our touch
 			const touchPosition = changedTouches[0].clientY;
 
 			// if user clicks on active value we will stop drag event
 			// otherwise we will allow user do continue drag in order to find value
-			// that we wish to select
-			const endDrag = !isInsideElement(top, elementHeight, touchPosition);
+			// that he wish to select
+			const endDrag = !isInsideElement(top, height, touchPosition);
 
 			this._onDragStop(endDrag);
 		}
@@ -508,6 +518,7 @@ WheelPickerCore.propTypes = {
 	valueFormater: PropTypes.func,
 	enableAnimation: PropTypes.bool,
 	disabled: PropTypes.bool,
+	maintainSelectedValuePosition: PropTypes.bool,
 	onChange: PropTypes.func,
 	onMouseDown: PropTypes.func,
 	onMouseMove: PropTypes.func,
@@ -527,6 +538,7 @@ WheelPickerCore.defaultProps = {
 	valueFormater: val => val,
 	enableAnimation: true,
 	disabled: false,
+	maintainSelectedValuePosition: true,
 	onChange: () => {},
 	onMouseDown: () => {},
 	onMouseMove: () => {},

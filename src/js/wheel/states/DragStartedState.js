@@ -27,10 +27,12 @@ export default class DragStartedState extends ChainState {
 	changeState() {
 		return (prevState, props) => {
 			const { selectedIndex, values, marginLeft } = prevState;
-			const { expandSize } = props;
+			const {
+				expandSize,
+				maintainSelectedValuePosition,
+				alwaysExpand
+			} = props;
 
-			// get windows size after we enter choose phase
-			const ws = getWindowSize();
 			// get current element height, in some cases after choose prepair is done
 			// we will apply style that will change element height, so we need to recalculate
 			// element size again
@@ -45,8 +47,12 @@ export default class DragStartedState extends ChainState {
 				selectedIndex
 			).getBoundingClientRect();
 
+			const useState =
+				alwaysExpand ||
+				maintainSelectedValuePosition === false ||
+				prevState.dragStarted;
 			// new translate state that includes insufficient space translation for top or bottom
-			const translateState = prevState.dragStarted
+			const translateState = useState
 				? {}
 				: checkInsufficientSpace(
 						this._wheelElementHolder.getBoundingClientRect(),
@@ -57,23 +63,28 @@ export default class DragStartedState extends ChainState {
 				  );
 			const heightDelta = prevState.elementHeight - elementHeight;
 
-			// calculate if we need to move wheel left or right in order to makse sure that it is fully visible
-			// to the user
-			let newMarginLeft = marginLeft;
-			if (left < 0) {
-				newMarginLeft = -left;
-			} else if (this._prevWindowSize.width - ws.width) {
-				newMarginLeft = this._prevWindowSize.width - ws.width;
-			}
-
 			return {
 				...translateState,
 				translate: prevState.translate + (prevTop - top) + heightDelta,
 				dragStarted: true,
 				dragStartPosition: this._position,
 				elementHeight: elementHeight,
-				marginLeft: newMarginLeft
+				marginLeft: this._getMarginLeft(marginLeft, left)
 			};
 		};
+	}
+
+	_getMarginLeft(marginLeft, elementLeft) {
+		// get windows size after we enter choose phase
+		const ws = getWindowSize();
+		// calculate if we need to move wheel left or right in order to makse sure that it is fully visible
+		// to the user
+		if (elementLeft < 0) {
+			return -elementLeft;
+		} else if (this._prevWindowSize.width - ws.width) {
+			return this._prevWindowSize.width - ws.width;
+		}
+
+		return marginLeft;
 	}
 }
