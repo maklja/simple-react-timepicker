@@ -63,11 +63,12 @@ export default class DragStopedState extends ChainState {
 					// go 29px, 58px, 87px and so on, this will ensure that currently selected value
 					// is always visible
 					translate: -elementHeight * newSelectedIndex,
-					offsetHeight: 0,
-					dragCrossed: 0,
 					values: newValues,
 					selectedIndex: newSelectedIndex,
-					elementHeight
+					elementHeight,
+					offsetHeight: 0,
+					dragCrossed: 0,
+					marginLeft: 0
 				};
 			}
 		};

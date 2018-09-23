@@ -1,5 +1,6 @@
 import { ChainState } from './ChainState';
 import { getValueElementByIndex } from '../calc_func';
+import { getWindowSize } from '../../utils/helper';
 
 export default class PrepairChooseState extends ChainState {
 	get selectedValueBoundingRect() {
@@ -11,6 +12,7 @@ export default class PrepairChooseState extends ChainState {
 
 		this._el = el;
 		this._selectedValueBB = null;
+		this._ws = null;
 		this._isPrepairChoose = isPrepairChoose;
 	}
 
@@ -21,12 +23,16 @@ export default class PrepairChooseState extends ChainState {
 				this._el,
 				selectedIndex
 			).getBoundingClientRect();
+			this._ws = getWindowSize();
 
 			return { prepairChoose: this._isPrepairChoose };
 		};
 	}
 
 	_onResolve() {
-		return this.selectedValueBoundingRect;
+		return {
+			valueBoundingRect: this.selectedValueBoundingRect,
+			windowSize: this._ws
+		};
 	}
 }

@@ -59,7 +59,7 @@ export const windowAvailableSpace = (
 	let { top, bottom } = boundingBox;
 	const { height } = windowSize;
 
-	top += -padding;
+	top -= padding;
 	bottom += padding;
 	// calculate top available space
 	// calculate how many elements can fit before time picker

@@ -4,6 +4,7 @@ import {
 	getValueElementByIndex,
 	getWheelInfo
 } from '../calc_func';
+import { getWindowSize } from '../../utils/helper';
 
 export default class DragStartedState extends ChainState {
 	constructor(
@@ -11,7 +12,8 @@ export default class DragStartedState extends ChainState {
 		wheelElement,
 		wheelElementHolder,
 		prepairBoundingRect,
-		position
+		position,
+		prevWindowSize
 	) {
 		super(setState);
 
@@ -19,20 +21,31 @@ export default class DragStartedState extends ChainState {
 		this._wheelElementHolder = wheelElementHolder;
 		this._position = position;
 		this._prepairBoundingRect = prepairBoundingRect;
+		this._prevWindowSize = prevWindowSize;
 	}
 
 	changeState() {
 		return (prevState, props) => {
-			const { selectedIndex, values } = prevState;
+			const { selectedIndex, values, marginLeft } = prevState;
 			const { expandSize } = props;
 
+			// get windows size after we enter choose phase
+			const ws = getWindowSize();
+			// get current element height, in some cases after choose prepair is done
+			// we will apply style that will change element height, so we need to recalculate
+			// element size again
 			const { elementHeight } = getWheelInfo(this._wheelElement);
-			const top = this._prepairBoundingRect.top;
-			const newTop = getValueElementByIndex(
+			// top position of the selected element value before starting choose value phase
+			// we need this to allign top position of our selected element with prevous one (the one
+			// before elementHeight change)
+			const prevTop = this._prepairBoundingRect.top;
+			// get selected element
+			const { top, left } = getValueElementByIndex(
 				this._wheelElement,
 				selectedIndex
-			).getBoundingClientRect().top;
+			).getBoundingClientRect();
 
+			// new translate state that includes insufficient space translation for top or bottom
 			const translateState = prevState.dragStarted
 				? {}
 				: checkInsufficientSpace(
@@ -43,12 +56,23 @@ export default class DragStartedState extends ChainState {
 						expandSize
 				  );
 			const heightDelta = prevState.elementHeight - elementHeight;
+
+			// calculate if we need to move wheel left or right in order to makse sure that it is fully visible
+			// to the user
+			let newMarginLeft = marginLeft;
+			if (left < 0) {
+				newMarginLeft = -left;
+			} else if (this._prevWindowSize.width - ws.width) {
+				newMarginLeft = this._prevWindowSize.width - ws.width;
+			}
+
 			return {
 				...translateState,
-				translate: prevState.translate + (top - newTop) + heightDelta,
+				translate: prevState.translate + (prevTop - top) + heightDelta,
 				dragStarted: true,
 				dragStartPosition: this._position,
-				elementHeight: elementHeight
+				elementHeight: elementHeight,
+				marginLeft: newMarginLeft
 			};
 		};
 	}

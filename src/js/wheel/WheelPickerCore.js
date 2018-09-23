@@ -44,6 +44,10 @@ export default class WheelPickerCore extends React.Component {
 			expandSize,
 			values: expandedValues,
 			offsetHeight: 0,
+			// some times in choose phase we dont have space to show
+			// whole wheel because window edge, so we move wheel left or right
+			// using margin
+			marginLeft: 0,
 			// set currently selected value
 			selectedIndex: null,
 			dragStarted: false,
@@ -315,13 +319,14 @@ export default class WheelPickerCore extends React.Component {
 		);
 		prepairChooseState
 			.executeState()
-			.then(prepairBoundingRect => {
+			.then(({ valueBoundingRect, windowSize }) => {
 				const dragStartedState = new DragStartedState(
 					this.setState,
 					this._valuePickerEl,
 					this._el,
-					prepairBoundingRect,
-					position
+					valueBoundingRect,
+					position,
+					windowSize
 				);
 
 				return dragStartedState.executeState();
@@ -353,13 +358,13 @@ export default class WheelPickerCore extends React.Component {
 		);
 		prepairChooseState
 			.executeState()
-			.then(prepairBoundingRect => {
+			.then(({ valueBoundingRect }) => {
 				const dragStopedState = new DragStopedState(
 					this.setState,
 					this._valuePickerEl,
 					this._el,
 					dragContinue,
-					prepairBoundingRect
+					valueBoundingRect
 				);
 
 				return dragStopedState.executeState();
@@ -376,18 +381,19 @@ export default class WheelPickerCore extends React.Component {
 		if (this._el == null) {
 			return {};
 		}
-		const { elementHeight, expandSize } = this.state;
+		const { elementHeight, expandSize, marginLeft } = this.state;
 		const { offsetTop, offsetBottom } = windowAvailableSpace(
 			elementHeight,
 			expandSize,
 			this._el.getBoundingClientRect(),
 			getWindowSize()
 		);
+		const marginTop = offsetBottom - offsetTop;
 
 		return {
 			height: `${elementHeight * (2 * expandSize + 1) +
 				EXTEND_PADDING}px`,
-			marginTop: `-${offsetTop - offsetBottom}px`
+			margin: `${marginTop}px 0 0 ${marginLeft}px`
 		};
 	}
 

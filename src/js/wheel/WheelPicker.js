@@ -50,7 +50,7 @@ export default class WheelPicker extends React.Component {
 					ref={el => (this._wheelPicker = el)}
 					values={values}
 					selectedIndex={selectedIndex}
-					extendValuesTime={expandSize}
+					expandSize={expandSize}
 					enableAnimation={enableAnimation}
 					valueFormater={valueFormater}
 					onWheel={this._onWheel}
