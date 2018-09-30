@@ -1,20 +1,38 @@
-import PrepairChooseState from '../wheel/states/PrepairChooseState';
-import DragStartedState from '../wheel/states/DragStartedState';
-import DragStopedState from '../wheel/states/DragStopedState';
-import DragingState from '../wheel/states/DragingState';
+import AbstractDragStrategy from './AbstractDragStrategy';
 
-export default class DefaultDragStrategy {
+import InitState from '../wheel/states/default/InitState';
+import PrepairChooseState from '../wheel/states/PrepairChooseState';
+import DragStartedState from '../wheel/states/default/DragStartedState';
+import DragStopedState from '../wheel/states/default/DragStopedState';
+import DragingState from '../wheel/states/default/DragingState';
+
+export default class DefaultDragStrategy extends AbstractDragStrategy {
 	constructor(setState, valuePickerElRef, elRef) {
-		this.setState = setState;
+		super(setState);
 
 		this._valuePickerElRef = valuePickerElRef;
 		this._elRef = elRef;
 	}
 
-	// init state
-	// init() {
+	isExpanded(state) {
+		const { dragStarted } = state;
+		return dragStarted;
+	}
 
-	// }
+	isChooseStarted(state) {
+		const { prepairChoose } = state;
+		return prepairChoose;
+	}
+
+	init() {
+		const initState = new InitState(
+			this.setState,
+			this._valuePickerElRef.current,
+			this._elRef.current
+		);
+
+		return initState.executeState();
+	}
 
 	onDragStart(position) {
 		const prepairChooseState = new PrepairChooseState(

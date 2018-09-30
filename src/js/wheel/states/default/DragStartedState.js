@@ -1,11 +1,11 @@
-import { ChainState } from './ChainState';
+import { ChainState } from '../ChainState';
 import {
 	checkInsufficientSpace,
 	getValueElementByIndex,
 	getWheelInfo,
 	roundValueByStep
-} from '../calc_func';
-import { getWindowSize } from '../../utils/helper';
+} from '../../calc_func';
+import { getWindowSize } from '../../../utils/helper';
 
 export default class DragStartedState extends ChainState {
 	constructor(
@@ -28,11 +28,7 @@ export default class DragStartedState extends ChainState {
 	changeState() {
 		return (prevState, props) => {
 			const { selectedIndex, values, marginLeft } = prevState;
-			const {
-				expandSize,
-				maintainSelectedValuePosition,
-				alwaysExpand
-			} = props;
+			const { expandSize } = props;
 
 			// get current element height, in some cases after choose prepair is done
 			// we will apply style that will change element height, so we need to recalculate
@@ -48,10 +44,7 @@ export default class DragStartedState extends ChainState {
 				selectedIndex
 			).getBoundingClientRect();
 
-			const useState =
-				alwaysExpand ||
-				maintainSelectedValuePosition === false ||
-				prevState.dragStarted;
+			const useState = this._checkInsufficientSpace(prevState, props);
 
 			// new translate state that includes insufficient space translation for top or bottom
 			const translateState = useState
@@ -80,6 +73,12 @@ export default class DragStartedState extends ChainState {
 				marginLeft: this._getMarginLeft(marginLeft, left)
 			};
 		};
+	}
+
+	_checkInsufficientSpace(state, props) {
+		return (
+			state.dragStarted || props.maintainSelectedValuePosition === false
+		);
 	}
 
 	_getMarginLeft(marginLeft, elementLeft) {

@@ -12,12 +12,11 @@ import {
 	nextOffset,
 	windowAvailableSpace,
 	isInsideElement,
-	getWheelInfo,
-	checkInsufficientSpace,
 	getValueElementByIndex
 } from './calc_func';
 
 import DefaultDragStrategy from '../strategy/DefaultDragStrategy';
+import AlwaysExpandStrategy from '../strategy/AlwaysExpandStrategy';
 
 import '../../assets/css/wheel/wheel.css';
 
@@ -84,43 +83,23 @@ export default class WheelPickerCore extends React.Component {
 		this.setState = this.setState.bind(this);
 	}
 
+	componentWillMount() {
+		const { alwaysExpand } = this.props;
+		this._dragStrategy = alwaysExpand
+			? new AlwaysExpandStrategy(
+					this.setState,
+					this._valuePickerEl,
+					this._el
+			  )
+			: new DefaultDragStrategy(
+					this.setState,
+					this._valuePickerEl,
+					this._el
+			  );
+	}
+
 	componentDidMount() {
-		this._dragStrategy = new DefaultDragStrategy(
-			this.setState,
-			this._valuePickerEl,
-			this._el
-		);
-
-		this.setState((prevState, props) => {
-			const { alwaysExpand, maintainSelectedValuePosition } = props;
-			const translateState = getWheelInfo(this._valuePickerEl.current);
-
-			if (alwaysExpand) {
-				const { values, expandSize } = prevState;
-				const insufficientSpaceState = maintainSelectedValuePosition
-					? checkInsufficientSpace(
-							this._el.current.getBoundingClientRect(),
-							translateState.selectedIndex,
-							translateState.elementHeight,
-							values,
-							expandSize
-					  )
-					: {};
-				const finalState = {
-					prepairChoose: true,
-					selectedElementHeight: translateState.elementHeight,
-					...translateState,
-					...insufficientSpaceState
-				};
-
-				return finalState;
-			} else {
-				return {
-					...translateState,
-					selectedElementHeight: translateState.elementHeight
-				};
-			}
-		});
+		this._dragStrategy.init();
 		window.addEventListener('touchstart', this.collapse);
 	}
 
@@ -408,12 +387,7 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	render() {
-		const {
-			valueFormater,
-			enableAnimation,
-			disabled,
-			alwaysExpand
-		} = this.props;
+		const { valueFormater, enableAnimation, disabled } = this.props;
 
 		const {
 			translate,
@@ -421,13 +395,14 @@ export default class WheelPickerCore extends React.Component {
 			expandSize,
 			values,
 			offsetHeight,
-			dragStarted,
-			prepairChoose,
 			selectedElementHeight
 		} = this.state;
 
-		const expanded = dragStarted || alwaysExpand;
-		const chooseStarted = prepairChoose || alwaysExpand;
+		const expanded = this._dragStrategy.isExpanded(this.state, this.props);
+		const chooseStarted = this._dragStrategy.isChooseStarted(
+			this.state,
+			this.props
+		);
 
 		// is component is in  choose mode we need to calculate the view port so the user can
 		// see more vvalues from the wheel

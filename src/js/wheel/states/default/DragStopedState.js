@@ -1,10 +1,10 @@
-import { ChainState } from './ChainState';
+import { ChainState } from '../ChainState';
 import {
 	sliceAroundMiddle,
 	roundValueByStep,
 	getWheelInfo,
 	arrayRotate
-} from '../calc_func';
+} from '../../calc_func';
 
 export default class DragStopedState extends ChainState {
 	constructor(
@@ -24,9 +24,9 @@ export default class DragStopedState extends ChainState {
 
 	changeState() {
 		return (prevState, props) => {
-			const { expandSize, alwaysExpand } = props;
+			const { expandSize } = props;
 
-			if (this._dragContinue || alwaysExpand) {
+			if (this._isDragContinue()) {
 				return {
 					// we need to round position because current translated distance
 					// wont fit in current value div, so we need to round it up
@@ -73,5 +73,9 @@ export default class DragStopedState extends ChainState {
 				};
 			}
 		};
+	}
+
+	_isDragContinue() {
+		return this._dragContinue;
 	}
 }

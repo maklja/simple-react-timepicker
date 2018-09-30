@@ -1,10 +1,10 @@
-import { ChainState } from './ChainState';
+import { ChainState } from '../ChainState';
 import {
 	convertPostionToTranslate,
 	nextTranslateDelta,
 	arrayRotate,
 	nextOffset
-} from '../calc_func';
+} from '../../calc_func';
 
 export default class DragingState extends ChainState {
 	constructor(setState, position) {
