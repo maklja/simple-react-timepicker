@@ -2,47 +2,54 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Motion, spring } from 'react-motion';
 
-export const Wheel = ({
-	values,
-	selectedIndex,
-	onMouseDown,
-	onMouseMove,
-	onTouchStart,
-	onTouchMove,
-	onElementCreated,
-	valueFormater,
-	translate,
-	offsetHeight,
-	disabled
-}) => {
-	return (
-		<div
-			ref={onElementCreated}
-			onTouchStart={onTouchStart}
-			onTouchMove={onTouchMove}
-			onMouseDown={onMouseDown}
-			onMouseMove={onMouseMove}
-			tabIndex={disabled ? '' : '0'}
-			style={{
-				transform: `translateY(${translate}px)`,
-				touchAction: 'none' // TODO move
-			}}
-			className="wheel"
-		>
-			<div className="offset-div" style={{ marginTop: offsetHeight }} />
-			{values.map((curVal, i) => (
+export const Wheel = React.forwardRef(
+	(
+		{
+			values,
+			selectedIndex,
+			onMouseDown,
+			onMouseMove,
+			onTouchStart,
+			onTouchMove,
+			valueFormater,
+			translate,
+			offsetHeight,
+			disabled
+		},
+		ref
+	) => {
+		return (
+			<div
+				ref={ref}
+				onTouchStart={onTouchStart}
+				onTouchMove={onTouchMove}
+				onMouseDown={onMouseDown}
+				onMouseMove={onMouseMove}
+				tabIndex={disabled ? '' : '0'}
+				style={{
+					transform: `translateY(${translate}px)`,
+					touchAction: 'none' // TODO move
+				}}
+				className="wheel"
+			>
 				<div
-					key={i}
-					className={`value ${
-						selectedIndex === i ? 'active' : 'inactive'
-					}`}
-				>
-					{valueFormater(curVal)}
-				</div>
-			))}
-		</div>
-	);
-};
+					className="offset-div"
+					style={{ marginTop: offsetHeight }}
+				/>
+				{values.map((curVal, i) => (
+					<div
+						key={i}
+						className={`value ${
+							selectedIndex === i ? 'active' : 'inactive'
+						}`}
+					>
+						{valueFormater(curVal)}
+					</div>
+				))}
+			</div>
+		);
+	}
+);
 
 Wheel.propTypes = {
 	values: PropTypes.arrayOf(
@@ -52,7 +59,6 @@ Wheel.propTypes = {
 	valueFormater: PropTypes.func,
 	onMouseDown: PropTypes.func,
 	onMouseMove: PropTypes.func,
-	onElementCreated: PropTypes.func,
 	translate: PropTypes.number,
 	offsetHeight: PropTypes.number,
 	onTouchStart: PropTypes.func,
@@ -65,7 +71,6 @@ Wheel.defaultProps = {
 	valueFormater: val => val,
 	onMouseDown: () => {},
 	onMouseMove: () => {},
-	onElementCreated: () => {},
 	translate: 0,
 	offsetHeight: 0,
 	onTouchStart: () => {},
@@ -84,18 +89,21 @@ const createAnimationSettings = translateY => {
 };
 
 export const AnimationWheel = props => {
-	const { translate } = props;
+	const { translate, setRef } = props;
 	const animationSettings = createAnimationSettings(translate);
 
 	return (
 		<Motion style={animationSettings}>
-			{({ translateY }) => <Wheel {...props} translate={translateY} />}
+			{({ translateY }) => (
+				<Wheel {...props} ref={setRef} translate={translateY} />
+			)}
 		</Motion>
 	);
 };
 
 AnimationWheel.propTypes = {
-	...Wheel.propTypes
+	...Wheel.propTypes,
+	setRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
 };
 
 AnimationWheel.defaultProps = {
@@ -115,14 +123,14 @@ export const WheelPickerBody = ({
 	onTouchMove,
 	onTouchEnd,
 	onTouchCancel,
-	onElementCreated,
 	translate,
 	offsetHeight,
 	elementHeight,
 	disabled,
 	animation,
 	onKeyDown,
-	currentValueStyle
+	currentValueStyle,
+	setRef
 }) => {
 	return (
 		<div
@@ -145,8 +153,8 @@ export const WheelPickerBody = ({
 			>
 				{animation ? (
 					<AnimationWheel
+						setRef={setRef}
 						values={values}
-						onElementCreated={onElementCreated}
 						onTouchStart={onTouchStart}
 						onTouchMove={onTouchMove}
 						onMouseDown={onMouseDown}
@@ -159,8 +167,8 @@ export const WheelPickerBody = ({
 					/>
 				) : (
 					<Wheel
+						ref={setRef}
 						values={values}
-						onElementCreated={onElementCreated}
 						onTouchStart={onTouchStart}
 						onTouchMove={onTouchMove}
 						onMouseDown={onMouseDown}
@@ -179,6 +187,7 @@ export const WheelPickerBody = ({
 
 WheelPickerBody.propTypes = {
 	...Wheel.propTypes,
+	setRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
 	onMouseUp: PropTypes.func,
 	elementHeight: PropTypes.number,
 	animation: PropTypes.bool,

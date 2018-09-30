@@ -2,7 +2,8 @@ import { ChainState } from './ChainState';
 import {
 	checkInsufficientSpace,
 	getValueElementByIndex,
-	getWheelInfo
+	getWheelInfo,
+	roundValueByStep
 } from '../calc_func';
 import { getWindowSize } from '../../utils/helper';
 
@@ -51,6 +52,7 @@ export default class DragStartedState extends ChainState {
 				alwaysExpand ||
 				maintainSelectedValuePosition === false ||
 				prevState.dragStarted;
+
 			// new translate state that includes insufficient space translation for top or bottom
 			const translateState = useState
 				? {}
@@ -61,11 +63,17 @@ export default class DragStartedState extends ChainState {
 						values,
 						expandSize
 				  );
-			const heightDelta = prevState.elementHeight - elementHeight;
+
+			const heightDelta = useState
+				? 0
+				: prevState.elementHeight - elementHeight;
 
 			return {
 				...translateState,
-				translate: prevState.translate + (prevTop - top) + heightDelta,
+				translate: roundValueByStep(
+					prevState.translate + (prevTop - top) + heightDelta,
+					elementHeight
+				),
 				dragStarted: true,
 				dragStartPosition: this._position,
 				elementHeight: elementHeight,

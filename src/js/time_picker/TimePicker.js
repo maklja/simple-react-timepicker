@@ -35,8 +35,14 @@ export default class TimePicker extends React.Component {
 			meridiem: use12Hours ? (dateValue.getHours() > 12 ? PM : AM) : null
 		};
 
-		// TODO problem if we hide during next render??
-		this._wheelComp = {};
+		// TODO create extended state in wheel core
+		this._wheelComp = {
+			hour: React.createRef(),
+			minute: React.createRef(),
+			second: React.createRef(),
+			millisecond: React.createRef(),
+			meridiem: React.createRef()
+		};
 
 		this._onValueChange = this._onValueChange.bind(this);
 		this._onWheelExpended = this._onWheelExpended.bind(this);
@@ -93,7 +99,7 @@ export default class TimePicker extends React.Component {
 				{showHour ? (
 					<div className="cell">
 						<WheelPicker
-							ref={el => (this._wheelComp.hour = el)}
+							ref={this._wheelComp.hour}
 							name="hour"
 							values={generateArrayValues(
 								use12Hours ? 13 : 24,
@@ -116,7 +122,7 @@ export default class TimePicker extends React.Component {
 				{showMinutes ? (
 					<div className="cell">
 						<WheelPicker
-							ref={el => (this._wheelComp.minute = el)}
+							ref={this._wheelComp.minute}
 							name="minute"
 							values={generateArrayValues(60, stepMinute)}
 							valueFormater={timeFormater}
@@ -135,7 +141,7 @@ export default class TimePicker extends React.Component {
 				{showSeconds ? (
 					<div className="cell">
 						<WheelPicker
-							ref={el => (this._wheelComp.second = el)}
+							ref={this._wheelComp.second}
 							name="second"
 							values={generateArrayValues(60, stepSecond)}
 							valueFormater={timeFormater}
@@ -154,7 +160,7 @@ export default class TimePicker extends React.Component {
 				{showMilliseconds ? (
 					<div className="cell">
 						<WheelPicker
-							ref={el => (this._wheelComp.millisecond = el)}
+							ref={this._wheelComp.millisecond}
 							name="millisecond"
 							values={generateArrayValues(1000, stepMilliseconds)}
 							valueFormater={timeFormater}
@@ -176,7 +182,8 @@ export default class TimePicker extends React.Component {
 				{use12Hours && showHour ? (
 					<div className="cell">
 						<WheelPicker
-							ref={el => (this._wheelComp.meridiem = el)}
+							ref={this._wheelComp.meridiem}
+							expandSize={1}
 							name="meridiem"
 							values={Object.values(MERIDIEMS)}
 							valueFormater={timeFormater}
@@ -196,8 +203,11 @@ export default class TimePicker extends React.Component {
 
 	_onWheelExpended(name) {
 		for (const curCompName in this._wheelComp) {
-			if (curCompName !== name) {
-				this._wheelComp[curCompName].collapse();
+			if (
+				curCompName !== name &&
+				this._wheelComp[curCompName].current != null
+			) {
+				this._wheelComp[curCompName].current.collapse();
 			}
 		}
 	}

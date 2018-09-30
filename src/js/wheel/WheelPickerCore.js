@@ -17,14 +17,12 @@ import {
 	getValueElementByIndex
 } from './calc_func';
 
-import PrepairChooseState from './states/PrepairChooseState';
-import DragStartedState from './states/DragStartedState';
-import DragStopedState from './states/DragStopedState';
-import DragingState from './states/DragingState';
+import DefaultDragStrategy from '../strategy/DefaultDragStrategy';
 
 import '../../assets/css/wheel/wheel.css';
 
 const EXTEND_PADDING = 8;
+const MIN_EXPAND_SIZE = 3;
 
 export default class WheelPickerCore extends React.Component {
 	constructor(props) {
@@ -32,9 +30,10 @@ export default class WheelPickerCore extends React.Component {
 
 		const { values, expandSize, selectedIndex } = props;
 
+		const expandSizeMin = Math.max(expandSize, MIN_EXPAND_SIZE);
 		let expandedValues = this._extendValues(
 			values,
-			expandSize,
+			expandSizeMin,
 			selectedIndex
 		);
 
@@ -66,6 +65,9 @@ export default class WheelPickerCore extends React.Component {
 			prepairChoose: false
 		};
 
+		this._el = React.createRef();
+		this._valuePickerEl = React.createRef();
+
 		this._touchActive = false;
 
 		this.collapse = this.collapse.bind(this);
@@ -83,19 +85,21 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	componentDidMount() {
+		this._dragStrategy = new DefaultDragStrategy(
+			this.setState,
+			this._valuePickerEl,
+			this._el
+		);
+
 		this.setState((prevState, props) => {
-			const {
-				alwaysExpand,
-				expandSize,
-				maintainSelectedValuePosition
-			} = props;
-			const translateState = getWheelInfo(this._valuePickerEl);
+			const { alwaysExpand, maintainSelectedValuePosition } = props;
+			const translateState = getWheelInfo(this._valuePickerEl.current);
 
 			if (alwaysExpand) {
-				const { values } = prevState;
+				const { values, expandSize } = prevState;
 				const insufficientSpaceState = maintainSelectedValuePosition
 					? checkInsufficientSpace(
-							this._el.getBoundingClientRect(),
+							this._el.current.getBoundingClientRect(),
 							translateState.selectedIndex,
 							translateState.elementHeight,
 							values,
@@ -122,6 +126,7 @@ export default class WheelPickerCore extends React.Component {
 
 	componentWillUnmount() {
 		this._valuePickerEl = null;
+		this._el = null;
 		window.removeEventListener('touchstart', this.collapse);
 	}
 
@@ -234,7 +239,7 @@ export default class WheelPickerCore extends React.Component {
 
 			// get selected element
 			const { top, height } = getValueElementByIndex(
-				this._valuePickerEl,
+				this._valuePickerEl.current,
 				this.state.selectedIndex
 			).getBoundingClientRect();
 
@@ -322,29 +327,10 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	_onDragStart(position) {
-		const prepairChooseState = new PrepairChooseState(
-			this.setState,
-			this._valuePickerEl,
-			true
-		);
-		prepairChooseState
-			.executeState()
-			.then(({ valueBoundingRect, windowSize }) => {
-				const dragStartedState = new DragStartedState(
-					this.setState,
-					this._valuePickerEl,
-					this._el,
-					valueBoundingRect,
-					position,
-					windowSize
-				);
-
-				return dragStartedState.executeState();
-			})
-			.then(() => {
-				const { onDragStarted, name } = this.props;
-				onDragStarted(name);
-			});
+		this._dragStrategy.onDragStart(position).then(() => {
+			const { onDragStarted, name } = this.props;
+			onDragStarted(name);
+		});
 	}
 
 	_onDrag(position) {
@@ -352,8 +338,7 @@ export default class WheelPickerCore extends React.Component {
 			return;
 		}
 
-		const dragingState = new DragingState(this.setState, position);
-		dragingState.executeState();
+		this._dragStrategy.onDrag(position);
 	}
 
 	_onDragStop(dragContinue = false) {
@@ -361,41 +346,23 @@ export default class WheelPickerCore extends React.Component {
 			return;
 		}
 
-		const prepairChooseState = new PrepairChooseState(
-			this.setState,
-			this._valuePickerEl,
-			dragContinue
-		);
-		prepairChooseState
-			.executeState()
-			.then(({ valueBoundingRect }) => {
-				const dragStopedState = new DragStopedState(
-					this.setState,
-					this._valuePickerEl,
-					this._el,
-					dragContinue,
-					valueBoundingRect
-				);
-
-				return dragStopedState.executeState();
-			})
-			.then(() => {
-				if (dragContinue === false) {
-					this.props.onDragStoped();
-					this._onValueChanged();
-				}
-			});
+		this._dragStrategy.onDragStop(dragContinue).then(() => {
+			if (dragContinue === false) {
+				this.props.onDragStoped();
+				this._onValueChanged();
+			}
+		});
 	}
 
 	_getChooseStyle() {
-		if (this._el == null) {
+		if (this._el.current == null) {
 			return {};
 		}
 		const { elementHeight, expandSize, marginLeft } = this.state;
 		const { offsetTop, offsetBottom } = windowAvailableSpace(
 			elementHeight,
 			expandSize,
-			this._el.getBoundingClientRect(),
+			this._el.current.getBoundingClientRect(),
 			getWindowSize()
 		);
 		const marginTop = offsetBottom - offsetTop;
@@ -471,17 +438,18 @@ export default class WheelPickerCore extends React.Component {
 		const dragStartedClass = chooseStarted ? 'choose-started' : '';
 
 		const translateY = translate + activeDelta;
-		const visibleValues = sliceAroundMiddle(values, expandSize * 2);
+		// use slice around middle to limit number of elements that we need to show in DOM
+		// we take extend size and multiple it by 2 in order to show extend size elements
+		// above and bellow middle value. We add plus 1 to prevent edge case that element
+		// is not visible on edge, so show 1 element more on above and bellow
+		const visibleValues = sliceAroundMiddle(values, (expandSize + 1) * 2);
 
 		return (
-			<div
-				ref={el => (this._el = el)}
-				className={`wheel-holder ${dragStartedClass}`}
-			>
+			<div ref={this._el} className={`wheel-holder ${dragStartedClass}`}>
 				<WheelPickerBody
 					values={visibleValues}
 					selectedIndex={this._getHighlightedIndex()}
-					onElementCreated={el => (this._valuePickerEl = el)}
+					setRef={this._valuePickerEl}
 					elementHeight={selectedElementHeight}
 					animation={
 						enableAnimation && this._isDragStarted() === false
