@@ -38,4 +38,5 @@
 
 .arrow.down {
 	transform: rotate(45deg);
+	margin-bottom: 2.5px;
 }

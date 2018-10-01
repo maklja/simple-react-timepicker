@@ -161,13 +161,10 @@ export default class WheelPickerCore extends React.Component {
 
 	// called every time value on the wheel changes
 	_onValueChanged() {
-		const { values } = this.state;
+		const { values, selectedIndex } = this.state;
 		const { onChange, name } = this.props;
 
-		// middle element is always selected one
-		const selectedValueIndex = Math.round(values.length / 2);
-
-		onChange(values[selectedValueIndex], name);
+		onChange(values[selectedIndex], name);
 	}
 
 	_onTouchStart(e) {
