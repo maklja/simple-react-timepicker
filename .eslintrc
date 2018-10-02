@@ -1,20 +1,15 @@
 {
 	"root": true,
 
-	"extends": ["eslint:recommended", "plugin:prettier/recommended", "plugin:react/recommended"],
+	"extends": ["eslint:recommended", "plugin:prettier/recommended"],
 
 	"env": {
-        "es6": true,
-        "browser": true
+		"node": true
 	},
 
 	"parserOptions": {
 		"ecmaVersion": 6,
-        "sourceType": "module",
-        "ecmaFeatures": {
-            "jsx": true,
-            "experimentalObjectRestSpread": true
-          }
+		"sourceType": "module"
 	},
 
 	"rules": {
@@ -31,6 +26,7 @@
 		"eqeqeq": ["warn", "smart"],
 		"handle-callback-err": ["error", "^(err|error)$"],
 		"new-cap": ["error", { "newIsCap": true, "capIsNew": false }],
+		"no-console": "off",
 		"no-array-constructor": "error",
 		"no-caller": "error",
 		"no-eval": "error",

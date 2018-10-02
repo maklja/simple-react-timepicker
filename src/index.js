@@ -11,6 +11,7 @@ ReactDOM.render(
 		disabled={false}
 		stepMinute={5}
 		onValueChange={(curDateTime, id) => {
+			// eslint-disable-next-line no-console
 			console.log(id, curDateTime, curDateTime.getMilliseconds());
 		}}
 	/>,

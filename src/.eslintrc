@@ -1,0 +1,19 @@
+{
+	"extends": ["plugin:react/recommended"],
+
+	"env": {
+        "es6": true,
+        "browser": true
+	},
+
+	"parserOptions": {
+        "ecmaFeatures": {
+            "jsx": true,
+            "experimentalObjectRestSpread": true
+          }
+	},
+
+	"rules": {
+        "no-console": "error"
+    }
+}
