@@ -18,6 +18,8 @@ export const Wheel = React.forwardRef(
 		},
 		ref
 	) => {
+		const disabledClass = disabled ? 'disabled' : '';
+
 		return (
 			<div
 				ref={ref}
@@ -41,7 +43,7 @@ export const Wheel = React.forwardRef(
 						key={i}
 						className={`value ${
 							selectedIndex === i ? 'active' : 'inactive'
-						}`}
+						} ${disabledClass}`}
 					>
 						{valueFormater(curVal)}
 					</div>

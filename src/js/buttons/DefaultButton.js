@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { infinitiveInvoke } from '../utils/helper';
 
-import '../../assets/css/buttons/button.css';
+import '../../assets/scss/buttons/button.scss';
 
 export const DIRECTION = {
 	UP: 1,

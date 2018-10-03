@@ -5,7 +5,7 @@ import dateformat from 'dateformat';
 import TimePicker from './TimePicker';
 import { isFunction, roundDate } from '../utils/helper';
 
-import '../../assets/css/time_picker/time_picker_input.css';
+import '../../assets/scss/time_picker/time_picker_input.scss';
 
 const BLUR_TIMEOUT = 200; // ms
 

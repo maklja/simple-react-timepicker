@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { generateArrayValues, timeFormater, roundDate } from '../utils/helper';
 import WheelPicker from '../wheel/WheelPicker';
 
-import '../../assets/css/time_picker/time_picker.css';
+import '../../assets/scss/time_picker/time_picker.scss';
 
 const MERIDIEMS = { AM: 'AM', PM: 'PM' };
 const { AM, PM } = MERIDIEMS;

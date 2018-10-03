@@ -18,7 +18,7 @@ import {
 import DefaultDragStrategy from '../strategy/DefaultDragStrategy';
 import AlwaysExpandStrategy from '../strategy/AlwaysExpandStrategy';
 
-import '../../assets/css/wheel/wheel.css';
+import '../../assets/scss/wheel/wheel.scss';
 
 const EXTEND_PADDING = 8;
 const MIN_EXPAND_SIZE = 3;
