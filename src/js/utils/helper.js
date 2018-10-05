@@ -96,3 +96,6 @@ export const roundDate = (
 
 	return newDateValue;
 };
+
+export const themeClassName = themeName =>
+	themeName ? `srtp-theme-${themeName}` : '';

@@ -3,8 +3,12 @@
 	align-items: center;
 	justify-content: space-around;
 	user-select: none;
-	background: #252525;
-	color: #dfdfdf;
+	@include themify($themes) {
+		background: themed('time_picker_background_color');
+		color: themed('time_picker_color');
+		border-color: themed('time_picker_border_color');
+	}
+	border: 1px solid;
 	padding: 2px 0;
 
 	.cell.split {
@@ -12,6 +16,8 @@
 	}
 
 	.current-value {
-		background-color: #252525;
+		@include themify($themes) {
+			background-color: themed('time_picker_background_color');
+		}
 	}
 }

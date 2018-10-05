@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 import Button, { DIRECTION } from '../buttons/DefaultButton';
 import WheelPickerCore from './WheelPickerCore';
+import { themeClassName } from '../utils/helper';
 
 export default class WheelPicker extends React.Component {
 	constructor(props) {
@@ -31,12 +32,15 @@ export default class WheelPicker extends React.Component {
 			name,
 			expandSize,
 			alwaysExpand,
-			maintainSelectedValuePosition
+			maintainSelectedValuePosition,
+			theme
 		} = this.props;
 		const { dragStarted } = this.state;
 
+		const themeClass = themeClassName(theme);
+
 		return (
-			<div>
+			<div className={themeClass}>
 				<Button
 					disabled={disabled}
 					onClick={this._wheelMove}
@@ -64,6 +68,8 @@ export default class WheelPicker extends React.Component {
 					maintainSelectedValuePosition={
 						maintainSelectedValuePosition
 					}
+					// don't put theme class on child component too
+					theme={null}
 				/>
 				<Button
 					disabled={disabled}
@@ -140,7 +146,8 @@ WheelPicker.propTypes = {
 	disabled: PropTypes.bool,
 	maintainSelectedValuePosition: PropTypes.bool,
 	onChange: PropTypes.func,
-	onExpand: PropTypes.func
+	onExpand: PropTypes.func,
+	theme: PropTypes.string
 };
 
 WheelPicker.defaultProps = {
@@ -154,5 +161,6 @@ WheelPicker.defaultProps = {
 	disabled: false,
 	maintainSelectedValuePosition: true,
 	onChange: () => {},
-	onExpand: () => {}
+	onExpand: () => {},
+	theme: 'light'
 };

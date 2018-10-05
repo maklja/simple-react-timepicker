@@ -1,10 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { generateArrayValues, timeFormater, roundDate } from '../utils/helper';
+import {
+	generateArrayValues,
+	timeFormater,
+	roundDate,
+	themeClassName
+} from '../utils/helper';
 import WheelPicker from '../wheel/WheelPicker';
 
-import '../../assets/scss/time_picker/time_picker.scss';
+import '../../assets/scss/time_picker/index.scss';
 
 const MERIDIEMS = { AM: 'AM', PM: 'PM' };
 const { AM, PM } = MERIDIEMS;
@@ -66,7 +71,8 @@ export default class TimePicker extends React.Component {
 			disableSeconds,
 			disableMilliseconds,
 			onFocus,
-			onBlur
+			onBlur,
+			theme
 		} = this.props;
 
 		const { value } = this.state;
@@ -88,10 +94,12 @@ export default class TimePicker extends React.Component {
 		second = Math.round(second / stepSecond);
 		millisecond = Math.round(millisecond / stepMilliseconds);
 
+		const themeClass = themeClassName(theme);
+
 		return (
 			<div
 				id={id}
-				className="time-picker"
+				className={`time-picker ${themeClass}`}
 				onFocus={onFocus}
 				onBlur={onBlur}
 				onClick={e => e.stopPropagation()}
@@ -101,6 +109,8 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							ref={this._wheelComp.hour}
 							name="hour"
+							// don't put theme class on child component too
+							theme={null}
 							values={generateArrayValues(
 								use12Hours ? 13 : 24,
 								stepHour,
@@ -124,6 +134,8 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							ref={this._wheelComp.minute}
 							name="minute"
+							// don't put theme class on child component too
+							theme={null}
 							values={generateArrayValues(60, stepMinute)}
 							valueFormater={timeFormater}
 							disabled={disableMinutes}
@@ -143,6 +155,8 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							ref={this._wheelComp.second}
 							name="second"
+							// don't put theme class on child component too
+							theme={null}
 							values={generateArrayValues(60, stepSecond)}
 							valueFormater={timeFormater}
 							disabled={disableSeconds}
@@ -162,6 +176,8 @@ export default class TimePicker extends React.Component {
 						<WheelPicker
 							ref={this._wheelComp.millisecond}
 							name="millisecond"
+							// don't put theme class on child component too
+							theme={null}
 							values={generateArrayValues(1000, stepMilliseconds)}
 							valueFormater={timeFormater}
 							disabled={disableMilliseconds}
@@ -185,6 +201,8 @@ export default class TimePicker extends React.Component {
 							ref={this._wheelComp.meridiem}
 							expandSize={1}
 							name="meridiem"
+							// don't put theme class on child component too
+							theme={null}
 							values={Object.values(MERIDIEMS)}
 							valueFormater={timeFormater}
 							disabled={disableHour}
@@ -301,7 +319,8 @@ TimePicker.propTypes = {
 	value: PropTypes.instanceOf(Date),
 	onValueChange: PropTypes.func,
 	onFocus: PropTypes.func,
-	onBlur: PropTypes.func
+	onBlur: PropTypes.func,
+	theme: PropTypes.string
 };
 
 TimePicker.defaultProps = {
@@ -324,5 +343,6 @@ TimePicker.defaultProps = {
 	value: null,
 	onValueChange: () => {},
 	onFocus: () => {},
-	onBlur: () => {}
+	onBlur: () => {},
+	theme: 'light'
 };

@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import dateformat from 'dateformat';
 
 import TimePicker from './TimePicker';
-import { isFunction, roundDate } from '../utils/helper';
+import { isFunction, roundDate, themeClassName } from '../utils/helper';
 
-import '../../assets/scss/time_picker/time_picker_input.scss';
+import '../../assets/scss/time_picker_input/index.scss';
 
 const BLUR_TIMEOUT = 200; // ms
 
@@ -44,11 +44,16 @@ export default class TimePickerInput extends React.Component {
 	}
 
 	render() {
-		const { readOnly, disabled, useOverlay } = this.props;
+		const { readOnly, disabled, useOverlay, theme } = this.props;
 		const { formatedValue, visible, value } = this.state;
 
+		const themeClass = themeClassName(theme);
 		return (
-			<div className={`time-picker-input ${useOverlay ? 'overlay' : ''}`}>
+			<div
+				className={`time-picker-input ${themeClass} ${
+					useOverlay ? 'overlay' : ''
+				}`}
+			>
 				<div>
 					<input
 						type="text"
@@ -64,6 +69,8 @@ export default class TimePickerInput extends React.Component {
 					<div className="holder">
 						<TimePicker
 							{...this.props}
+							// don't put theme class on child component too
+							theme={null}
 							value={value}
 							onFocus={this._onFocus}
 							onBlur={this._onBlur}

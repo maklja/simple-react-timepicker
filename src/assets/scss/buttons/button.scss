@@ -2,12 +2,15 @@
 	text-align: center;
 	
 	.arrow {
-		border: solid white;
+		@include themify($themes) {
+			border-color: themed('button_arrow_color');
+		}
 		border-width: 0 2px 2px 0;
+		border-style: solid;
 		display: inline-block;
 		padding: 3px;
 		margin-top: 4px;
-		transition: border-color 0.2s ease-in-out;
+		transition: $button_arrow_transition;
 
 		&.arrow.up {
 			transform: rotate(-135deg);
@@ -28,15 +31,18 @@
 	}
 
 	&.disabled {
-		color: darkgray;
 		cursor: default;
 
 		 .arrow {
-			border-color: gray;
+			@include themify($themes) {
+				border-color: themed('disabled_button_arrow_color');
+			}
 		}
 	}
 
 	&:not( .disabled ):hover .arrow {
-		border-color: orange;
+		@include themify($themes) {
+			border-color: themed('hover_button_arrow_color');
+		}
 	}
 }

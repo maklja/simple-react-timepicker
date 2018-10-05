@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import WheelPickerBody from './Wheel';
 
-import { getWindowSize } from '../utils/helper';
+import { getWindowSize, themeClassName } from '../utils/helper';
 import {
 	sliceAroundMiddle,
 	arrayRotate,
@@ -18,7 +18,7 @@ import {
 import DefaultDragStrategy from '../strategy/DefaultDragStrategy';
 import AlwaysExpandStrategy from '../strategy/AlwaysExpandStrategy';
 
-import '../../assets/scss/wheel/wheel.scss';
+import '../../assets/scss/wheel/index.scss';
 
 const EXTEND_PADDING = 8;
 const MIN_EXPAND_SIZE = 3;
@@ -394,6 +394,7 @@ export default class WheelPickerCore extends React.Component {
 			offsetHeight,
 			selectedElementHeight
 		} = this.state;
+		const { theme } = this.props;
 
 		const expanded = this._dragStrategy.isExpanded(this.state, this.props);
 		const chooseStarted = this._dragStrategy.isChooseStarted(
@@ -415,9 +416,13 @@ export default class WheelPickerCore extends React.Component {
 		// above and bellow middle value. We add plus 1 to prevent edge case that element
 		// is not visible on edge, so show 1 element more on above and bellow
 		const visibleValues = sliceAroundMiddle(values, (expandSize + 1) * 2);
+		const themeClass = themeClassName(theme);
 
 		return (
-			<div ref={this._el} className={`wheel-holder ${dragStartedClass}`}>
+			<div
+				ref={this._el}
+				className={`wheel-holder ${themeClass} ${dragStartedClass}`}
+			>
 				<WheelPickerBody
 					values={visibleValues}
 					selectedIndex={this._getHighlightedIndex()}
@@ -467,7 +472,8 @@ WheelPickerCore.propTypes = {
 	onWheel: PropTypes.func,
 	onKeyDown: PropTypes.func,
 	onDragStarted: PropTypes.func,
-	onDragStoped: PropTypes.func
+	onDragStoped: PropTypes.func,
+	theme: PropTypes.string
 };
 
 WheelPickerCore.defaultProps = {
@@ -487,5 +493,6 @@ WheelPickerCore.defaultProps = {
 	onWheel: () => {},
 	onKeyDown: () => {},
 	onDragStarted: () => {},
-	onDragStoped: () => {}
+	onDragStoped: () => {},
+	theme: 'light'
 };

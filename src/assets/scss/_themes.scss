@@ -1,0 +1,46 @@
+$themes: (
+    light: (
+         // value styles
+        active_value_color: darkorange,
+        disabled_value_color: darkgray,
+        inactive_value_color: inherit,
+
+        // choose wheel styles
+        wheel_value_border: #252525 ,
+
+        // buttons
+        button_arrow_color: #252525 ,
+        disabled_button_arrow_color: darkgray,
+        hover_button_arrow_color: darkorange,
+
+        // time picker
+        time_picker_background_color: white,
+        time_picker_color: #252525 ,
+        time_picker_border_color: lightgray,
+
+        // time picker input
+        time_picker_input_overlay_background_color: rgba(23, 23, 23, 0.7),
+    ),
+    dark: (
+        // value styles
+        active_value_color: orange,
+        disabled_value_color: gray,
+        inactive_value_color: inherit,
+
+        // choose wheel styles
+        wheel_value_border: #dfdfdf,
+
+        // buttons
+        button_arrow_color: white,
+        disabled_button_arrow_color: gray,
+        hover_button_arrow_color: orange,
+
+        // time picker
+        time_picker_background_color: #252525,
+        time_picker_color: #dfdfdf,
+        time_picker_border: 1px solid lightgray,
+
+        // time picker input
+        time_picker_input_overlay_background_color: rgba(23, 23, 23, 0.7),
+    ),
+) !default;

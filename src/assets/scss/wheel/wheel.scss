@@ -21,23 +21,28 @@
 	}
 
 	.value {
-		padding: 3px 0;
+		padding: $active_value_padding;
 		letter-spacing: 1px;
-		border-top: 1px solid transparent;
 		text-align: center;
 		box-sizing: border-box;
 
 		&.active {
-			color: orange;
-			font-weight: bold;
+			@include themify($themes) {
+				color: themed('active_value_color');
+			}
+			font-weight: $active_value_font_weight;
 		}
 
 		&.inactive {
-			opacity: 0.7;
+			@include themify($themes) {
+				color: themed('inactive_value_color');
+			}
 		}
 
 		&.disabled {
-			color: gray;
+			@include themify($themes) {
+				color: themed('disabled_value_color');
+			}
 		}
 	}
 }
@@ -49,11 +54,15 @@
 		z-index: 10;
 
 		.value {
-			padding: 6px 0;
-			border-top: 1px solid #dfdfdf;
+			padding: $wheel_value_padding;
+			border-top-width: 1px;
+			border-top-style: solid;
+			@include themify($themes) {
+				border-top-color: themed('wheel_value_border');
+			}
 
 			&.active {
-				font-size: 150%;
+				font-size: $wheel_active_font_size;
 			}
 		}
 

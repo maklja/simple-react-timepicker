@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom';
 
 import TimePickerInput from './js/time_picker/TimePickerInput';
 
-import './assets/scss/light_theme.scss';
-
 const rootElement = document.getElementById('root');
 ReactDOM.render(
 	<TimePickerInput
