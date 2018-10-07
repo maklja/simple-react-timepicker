@@ -99,3 +99,33 @@ export const roundDate = (
 
 export const themeClassName = themeName =>
 	themeName ? `srtp-theme-${themeName}` : '';
+
+export const defaultTimeFormater = ({
+	showHour,
+	showMinutes,
+	showSeconds,
+	showMilliseconds,
+	use12Hours
+}) => {
+	let timeFormat = '';
+
+	timeFormat += showHour ? 'hh' : '';
+
+	if (showMinutes) {
+		timeFormat += timeFormat.length >= 0 ? ':MM' : 'MM';
+	}
+
+	if (showSeconds) {
+		timeFormat += timeFormat.length >= 0 ? ':ss' : 'ss';
+	}
+
+	if (showMilliseconds) {
+		timeFormat += timeFormat.length >= 0 ? '.l' : 'l';
+	}
+
+	if (use12Hours) {
+		timeFormat += timeFormat.length >= 0 ? ' TT' : 'TT';
+	}
+
+	return timeFormat;
+};

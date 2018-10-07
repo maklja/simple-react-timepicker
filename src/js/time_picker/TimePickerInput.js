@@ -3,7 +3,12 @@ import PropTypes from 'prop-types';
 import dateformat from 'dateformat';
 
 import TimePicker from './TimePicker';
-import { isFunction, roundDate, themeClassName } from '../utils/helper';
+import {
+	isFunction,
+	roundDate,
+	themeClassName,
+	defaultTimeFormater
+} from '../utils/helper';
 
 import '../../assets/scss/time_picker_input/index.scss';
 
@@ -103,6 +108,8 @@ export default class TimePickerInput extends React.Component {
 	}
 
 	_onChange(e) {
+		console.log(e.target.value); // eslint-disable-line
+
 		this.setState({
 			formatedValue: e.target.value
 		});
@@ -116,11 +123,25 @@ export default class TimePickerInput extends React.Component {
 	}
 
 	_formatDate(date) {
-		const { defaultFormat, use12Hours } = this.props;
+		const {
+			defaultFormat,
+			use12Hours,
+			showHour,
+			showMinutes,
+			showSeconds,
+			showMilliseconds
+		} = this.props;
+
 		return dateformat(
 			date,
 			isFunction(defaultFormat)
-				? defaultFormat(use12Hours)
+				? defaultFormat({
+						showHour,
+						showMinutes,
+						showSeconds,
+						showMilliseconds,
+						use12Hours
+				  })
 				: defaultFormat
 		);
 	}
@@ -165,8 +186,7 @@ TimePickerInput.propTypes = {
 
 TimePickerInput.defaultProps = {
 	...TimePicker.defaultProps,
-	defaultFormat: use12HourFormat =>
-		use12HourFormat ? 'hh:MM:ss.l TT' : 'HH:MM:ss.l',
+	defaultFormat: defaultTimeFormater,
 	useOverlay: false,
 	onOpen: () => {},
 	onClose: () => {}
