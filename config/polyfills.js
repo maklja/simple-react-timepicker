@@ -10,6 +10,9 @@ if (typeof Promise === 'undefined') {
 
 // fetch() polyfill for making API calls.
 require('whatwg-fetch');
+require('core-js/modules/es7.object.values');
+require('core-js/modules/es6.array.from');
+require('core-js/modules/es6.math.sign');
 
 // Object.assign() is commonly used with React.
 // It will use the native implementation if it's present and isn't buggy.

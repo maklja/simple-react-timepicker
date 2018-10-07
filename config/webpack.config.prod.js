@@ -237,14 +237,6 @@ module.exports = {
 										},
 										{
 											loader: require.resolve(
-												'sass-loader'
-											),
-											options: {
-												sourceMap: shouldUseSourceMap
-											}
-										},
-										{
-											loader: require.resolve(
 												'postcss-loader'
 											),
 											options: {
@@ -262,7 +254,16 @@ module.exports = {
 														],
 														flexbox: 'no-2009'
 													})
-												]
+												],
+												sourceMap: shouldUseSourceMap
+											}
+										},
+										{
+											loader: require.resolve(
+												'sass-loader'
+											),
+											options: {
+												sourceMap: shouldUseSourceMap
 											}
 										}
 									]
