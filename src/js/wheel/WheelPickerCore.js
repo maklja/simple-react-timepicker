@@ -3,16 +3,16 @@ import PropTypes from 'prop-types';
 
 import WheelPickerBody from './Wheel';
 
-import { getWindowSize, themeClassName } from '../utils/helper';
+import { themeClassName } from '../utils/helper';
 import {
-	sliceAroundMiddle,
 	arrayRotate,
 	duplicateArrayValues,
 	nextTranslate,
 	nextOffset,
 	windowAvailableSpace,
 	isInsideElement,
-	getValueElementByIndex
+	getValueElementByIndex,
+	getVisibleValues
 } from './calc_func';
 
 import DefaultDragStrategy from '../strategy/DefaultDragStrategy';
@@ -162,9 +162,11 @@ export default class WheelPickerCore extends React.Component {
 	// called every time value on the wheel changes
 	_onValueChanged() {
 		const { values, selectedIndex } = this.state;
-		const { onChange, name } = this.props;
+		const { onChange, name, expandSize } = this.props;
 
-		onChange(values[selectedIndex], name);
+		const visibleValues = getVisibleValues(values, expandSize);
+
+		onChange(visibleValues[selectedIndex], name);
 	}
 
 	_onTouchStart(e) {
@@ -338,8 +340,7 @@ export default class WheelPickerCore extends React.Component {
 		const { offsetTop, offsetBottom } = windowAvailableSpace(
 			elementHeight,
 			expandSize,
-			this._el.current.getBoundingClientRect(),
-			getWindowSize()
+			this._el.current.getBoundingClientRect()
 		);
 		const marginTop = offsetBottom - offsetTop;
 
@@ -415,7 +416,7 @@ export default class WheelPickerCore extends React.Component {
 		// we take extend size and multiple it by 2 in order to show extend size elements
 		// above and bellow middle value. We add plus 1 to prevent edge case that element
 		// is not visible on edge, so show 1 element more on above and bellow
-		const visibleValues = sliceAroundMiddle(values, (expandSize + 1) * 2);
+		const visibleValues = getVisibleValues(values, expandSize);
 		const themeClass = themeClassName(theme);
 
 		return (

@@ -5,7 +5,6 @@ import {
 	getWheelInfo,
 	roundValueByStep
 } from '../../calc_func';
-import { getWindowSize } from '../../../utils/helper';
 
 export default class DragStartedState extends ChainState {
 	constructor(
@@ -82,14 +81,12 @@ export default class DragStartedState extends ChainState {
 	}
 
 	_getMarginLeft(marginLeft, elementLeft) {
-		// get windows size after we enter choose phase
-		const ws = getWindowSize();
-		// calculate if we need to move wheel left or right in order to makse sure that it is fully visible
+		// calculate if we need to move wheel left or right in order to make sure that it is fully visible
 		// to the user
 		if (elementLeft < 0) {
 			return -elementLeft;
-		} else if (this._prevWindowSize.width - ws.width) {
-			return this._prevWindowSize.width - ws.width;
+		} else if (this._prevWindowSize.width - window.innerWidth) {
+			return this._prevWindowSize.width - window.innerWidth;
 		}
 
 		return marginLeft;
