@@ -1,6 +1,4 @@
-import { getWindowSize } from '../../utils/helper';
-
-export const sliceAroundMiddle = (values, n) => {
+export const sliceAroundMiddle = (values, n = 0) => {
 	const middleValueIndex = Math.round(values.length / 2);
 	const beginIndex = middleValueIndex - n;
 	const endIndex = middleValueIndex + n;
@@ -8,7 +6,7 @@ export const sliceAroundMiddle = (values, n) => {
 	return values.slice(beginIndex < 0 ? 0 : beginIndex, endIndex);
 };
 
-export const arrayRotate = (arr, reverse, shiftNum = 1) => {
+export const arrayRotate = (arr, reverse = false, shiftNum = 1) => {
 	const cloneArr = [...arr];
 
 	if (reverse) {
@@ -24,16 +22,14 @@ export const arrayRotate = (arr, reverse, shiftNum = 1) => {
 	return cloneArr;
 };
 
-export const duplicateArrayValues = (values, maxLength, fromIndex) => {
+export const duplicateArrayValues = (values, stopLength, fromIndex = 0) => {
 	// create copy of the current values
-	let valuesCopy = [...values];
-
-	valuesCopy = arrayRotate(valuesCopy, false, fromIndex);
+	let valuesCopy = arrayRotate(values, false, fromIndex);
 
 	// maxValues number represent number of visible elements during selection mode
 	// if array doesn't have enough elements we need to clone them multiple times in
 	// order to satisfy maxValuesNumber condition
-	while (valuesCopy.length <= maxLength) {
+	while (valuesCopy.length <= stopLength) {
 		valuesCopy = valuesCopy.concat(valuesCopy);
 	}
 
@@ -53,11 +49,10 @@ export const windowAvailableSpace = (
 	elementHeight,
 	n,
 	boundingBox,
-	windowSize,
 	padding = 10
 ) => {
 	let { top, bottom } = boundingBox;
-	const { height } = windowSize;
+	const { innerHeight } = window;
 
 	top -= padding;
 	bottom += padding;
@@ -70,7 +65,7 @@ export const windowAvailableSpace = (
 	// calculate how many elements can fit after time picker
 	const maxSpaceBottom = Math.min(
 		n,
-		Math.round(Math.abs(height - bottom) / elementHeight)
+		Math.round(Math.abs(innerHeight - bottom) / elementHeight)
 	);
 
 	const offsetBottom = (n - maxSpaceBottom) * elementHeight * -1;
@@ -162,8 +157,7 @@ export const checkInsufficientSpace = (
 	const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
 		elementHeight,
 		expandSize,
-		elementBoundingRect,
-		getWindowSize()
+		elementBoundingRect
 	);
 
 	return translateInsufficientSpace(
@@ -235,3 +229,6 @@ export const getWheelInfo = el => {
 		selectedIndex: Math.round(valuesChildren.length / 2)
 	};
 };
+
+export const getVisibleValues = (values, expandSize) =>
+	sliceAroundMiddle(values, (expandSize + 1) * 2);

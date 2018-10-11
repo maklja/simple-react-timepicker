@@ -105,11 +105,7 @@ export default class DefaultButton extends React.Component {
 	_pressedDelay() {
 		const { direction, onClick } = this.props;
 
-		this._cancelPress = infinitiveInvoke(
-			onClick,
-			() => this.state.buttonPressed,
-			direction
-		);
+		this._cancelPress = infinitiveInvoke(onClick, direction);
 	}
 
 	isDisabled() {

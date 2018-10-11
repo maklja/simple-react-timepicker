@@ -116,7 +116,7 @@ export default class TimePicker extends React.Component {
 								stepHour,
 								use12Hours ? 1 : 0
 							)}
-							valueFormater={timeFormater}
+							valueFormater={timeFormater(2)}
 							disabled={disableHour}
 							onChange={this._onValueChange}
 							selectedIndex={hour}
@@ -137,7 +137,7 @@ export default class TimePicker extends React.Component {
 							// don't put theme class on child component too
 							theme={null}
 							values={generateArrayValues(60, stepMinute)}
-							valueFormater={timeFormater}
+							valueFormater={timeFormater(2)}
 							disabled={disableMinutes}
 							onChange={this._onValueChange}
 							selectedIndex={minute}
@@ -158,7 +158,7 @@ export default class TimePicker extends React.Component {
 							// don't put theme class on child component too
 							theme={null}
 							values={generateArrayValues(60, stepSecond)}
-							valueFormater={timeFormater}
+							valueFormater={timeFormater(2)}
 							disabled={disableSeconds}
 							onChange={this._onValueChange}
 							selectedIndex={second}
@@ -179,7 +179,7 @@ export default class TimePicker extends React.Component {
 							// don't put theme class on child component too
 							theme={null}
 							values={generateArrayValues(1000, stepMilliseconds)}
-							valueFormater={timeFormater}
+							valueFormater={timeFormater(3)}
 							disabled={disableMilliseconds}
 							onChange={this._onValueChange}
 							selectedIndex={millisecond}
@@ -204,7 +204,6 @@ export default class TimePicker extends React.Component {
 							// don't put theme class on child component too
 							theme={null}
 							values={Object.values(MERIDIEMS)}
-							valueFormater={timeFormater}
 							disabled={disableHour}
 							onChange={this._onValueChange}
 							selectedIndex={meridiem}

@@ -1,22 +1,16 @@
-export const infinitiveInvoke = (
-	callback,
-	conditionCallback,
-	args,
-	delay = 250
-) => {
+export const infinitiveInvoke = (callback, args, delay = 250) => {
+	args = Array.isArray(args) ? args : [args];
 	let timeoutId = null;
 
-	const autoInvoke = (callback, conditionCallback, args, delay) => {
-		callback(args);
+	const autoInvoke = (callback, args, delay) => {
+		callback(...args);
 
 		timeoutId = setTimeout(() => {
-			if (conditionCallback()) {
-				autoInvoke(callback, conditionCallback, args, delay);
-			}
+			autoInvoke(callback, args, delay);
 		}, delay);
 	};
 
-	autoInvoke(callback, conditionCallback, args, delay);
+	autoInvoke(callback, args, delay);
 
 	return () => {
 		clearTimeout(timeoutId);
@@ -32,40 +26,15 @@ export const generateArrayValues = (maxValue, step, startValue = 0) => {
 	return values;
 };
 
-export const timeFormater = val => {
-	let s = val + '';
-	while (s.length < 2) {
-		s = '0' + s;
-	}
+export const timeFormater = n => {
+	return val => {
+		let s = val + '';
+		while (s.length < n) {
+			s = '0' + s;
+		}
 
-	return s;
-};
-
-export const getWindowSize = () => {
-	let width = 0,
-		height = 0;
-	if (typeof window.innerWidth === 'number') {
-		// Non-IE
-		width = window.innerWidth;
-		height = window.innerHeight;
-	} else if (
-		document.documentElement &&
-		(document.documentElement.clientWidth ||
-			document.documentElement.clientHeight)
-	) {
-		// IE 6+ in 'standards compliant mode'
-		width = document.documentElement.clientWidth;
-		height = document.documentElement.clientHeight;
-	} else if (
-		document.body &&
-		(document.body.clientWidth || document.body.clientHeight)
-	) {
-		// IE 4 compatible
-		width = document.body.clientWidth;
-		height = document.body.clientHeight;
-	}
-
-	return { width, height };
+		return s;
+	};
 };
 
 export const isFunction = func =>
@@ -73,10 +42,10 @@ export const isFunction = func =>
 
 export const roundDate = (
 	dateValue,
-	stepHour,
-	stepMinute,
-	stepSecond,
-	stepMilliseconds
+	stepHour = 1,
+	stepMinute = 1,
+	stepSecond = 1,
+	stepMilliseconds = 1
 ) => {
 	// we need to round up sent date in props to respect steps for each time part
 	// if we don't do this always after first wheel collapse we will get onChange event

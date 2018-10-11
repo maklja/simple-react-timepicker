@@ -1,9 +1,9 @@
 import { ChainState } from '../ChainState';
 import {
-	sliceAroundMiddle,
 	roundValueByStep,
 	getWheelInfo,
-	arrayRotate
+	arrayRotate,
+	getVisibleValues
 } from '../../calc_func';
 
 export default class DragStopedState extends ChainState {
@@ -48,7 +48,7 @@ export default class DragStopedState extends ChainState {
 				const { values, selectedIndex } = prevState;
 				const { elementHeight } = getWheelInfo(this._wheelElement);
 
-				const visibleValues = sliceAroundMiddle(values, 2 * expandSize);
+				const visibleValues = getVisibleValues(values, expandSize);
 				const newSelectedIndex = Math.round(visibleValues.length / 2);
 				const selectedIndexDelta = selectedIndex - newSelectedIndex;
 				const newValues = arrayRotate(
@@ -56,6 +56,7 @@ export default class DragStopedState extends ChainState {
 					selectedIndexDelta < 0,
 					Math.abs(selectedIndexDelta)
 				);
+
 				return {
 					dragStarted: this._dragContinue,
 					// we need to round position because current translated distance
