@@ -12,6 +12,7 @@ if (typeof Promise === 'undefined') {
 require('whatwg-fetch');
 require('core-js/modules/es7.object.values');
 require('core-js/modules/es6.array.from');
+require('core-js/modules/es6.array.find');
 require('core-js/modules/es6.math.sign');
 
 // Object.assign() is commonly used with React.

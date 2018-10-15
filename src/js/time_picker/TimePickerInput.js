@@ -3,11 +3,12 @@ import PropTypes from 'prop-types';
 import dateformat from 'dateformat';
 
 import TimePicker from './TimePicker';
+import TimeParser from '../utils/parser/TimeParser';
 import {
-	isFunction,
 	roundDate,
 	themeClassName,
-	defaultTimeFormater
+	defaultTimeFormater,
+	isFunction
 } from '../utils/helper';
 
 import '../../assets/scss/time_picker_input/index.scss';
@@ -37,8 +38,11 @@ export default class TimePickerInput extends React.Component {
 		this.state = {
 			value: dateValue,
 			formatedValue: this._formatDate(dateValue),
-			visible: false
+			visible: false,
+			isFocused: false
 		};
+
+		this._timeParser = new TimeParser(this._getTimeFormat());
 
 		this._onTimePickerChange = this._onTimePickerChange.bind(this);
 		this._onChange = this._onChange.bind(this);
@@ -91,12 +95,25 @@ export default class TimePickerInput extends React.Component {
 
 	_onClick(e) {
 		e.stopPropagation();
+
+		this.setState(state => {
+			if (state.visible) {
+				return null;
+			}
+
+			return {
+				visible: true
+			};
+		});
 	}
 
-	_onFocus() {
+	_onFocus(e) {
+		e.stopPropagation();
+
 		clearTimeout(this._removeFocus);
 		this.setState({
-			visible: true
+			visible: true,
+			isFocused: true
 		});
 	}
 
@@ -108,11 +125,41 @@ export default class TimePickerInput extends React.Component {
 	}
 
 	_onChange(e) {
-		console.log(e.target.value); // eslint-disable-line
+		const target = e.target;
+		const newTimeValueStr = target.value;
+		const selectionPosition = target.selectionStart;
 
-		this.setState({
-			formatedValue: e.target.value
-		});
+		this.setState(
+			(prevState, props) => {
+				const { value } = prevState;
+				const {
+					stepHour,
+					stepMinute,
+					stepSecond,
+					stepMilliseconds
+				} = props;
+
+				const newDate = roundDate(
+					this._timeParser.extractAsDate(newTimeValueStr, value),
+					stepHour,
+					stepMinute,
+					stepSecond,
+					stepMilliseconds
+				);
+
+				return {
+					formatedValue:
+						newDate != null
+							? this._formatDate(newDate)
+							: newTimeValueStr,
+					value: newDate || value,
+					visible: false
+				};
+			},
+			() => {
+				target.selectionStart = target.selectionEnd = selectionPosition;
+			}
+		);
 	}
 
 	_onTimePickerChange(curDateTime, id) {
@@ -123,6 +170,10 @@ export default class TimePickerInput extends React.Component {
 	}
 
 	_formatDate(date) {
+		return dateformat(date, this._getTimeFormat());
+	}
+
+	_getTimeFormat() {
 		const {
 			defaultFormat,
 			use12Hours,
@@ -132,23 +183,24 @@ export default class TimePickerInput extends React.Component {
 			showMilliseconds
 		} = this.props;
 
-		return dateformat(
-			date,
-			isFunction(defaultFormat)
-				? defaultFormat({
-						showHour,
-						showMinutes,
-						showSeconds,
-						showMilliseconds,
-						use12Hours
-				  })
-				: defaultFormat
-		);
+		return isFunction(defaultFormat)
+			? defaultFormat({
+					showHour,
+					showMinutes,
+					showSeconds,
+					showMilliseconds,
+					use12Hours
+			  })
+			: defaultFormat;
 	}
 
 	_hideTimePicker() {
-		this.setState({
-			visible: false
+		this.setState(state => {
+			return {
+				formatedValue: this._formatDate(state.value),
+				visible: false,
+				isFocused: false
+			};
 		});
 	}
 

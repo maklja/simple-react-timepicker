@@ -37,9 +37,6 @@ export const timeFormater = n => {
 	};
 };
 
-export const isFunction = func =>
-	func && {}.toString.call(func) === '[object Function]';
-
 export const roundDate = (
 	dateValue,
 	stepHour = 1,
@@ -47,6 +44,9 @@ export const roundDate = (
 	stepSecond = 1,
 	stepMilliseconds = 1
 ) => {
+	if (dateValue == null) {
+		return null;
+	}
 	// we need to round up sent date in props to respect steps for each time part
 	// if we don't do this always after first wheel collapse we will get onChange event
 	// even if no changes are made, this is only because rounding of date parts
@@ -75,26 +75,31 @@ export const defaultTimeFormater = ({
 	showSeconds,
 	showMilliseconds,
 	use12Hours
-}) => {
+} = {}) => {
 	let timeFormat = '';
 
-	timeFormat += showHour ? 'hh' : '';
+	if (showHour) {
+		timeFormat += use12Hours ? 'hh' : 'HH';
+	}
 
 	if (showMinutes) {
-		timeFormat += timeFormat.length >= 0 ? ':MM' : 'MM';
+		timeFormat += timeFormat.length > 0 ? ':MM' : 'MM';
 	}
 
 	if (showSeconds) {
-		timeFormat += timeFormat.length >= 0 ? ':ss' : 'ss';
+		timeFormat += timeFormat.length > 0 ? ':ss' : 'ss';
 	}
 
 	if (showMilliseconds) {
-		timeFormat += timeFormat.length >= 0 ? '.l' : 'l';
+		timeFormat += timeFormat.length > 0 ? '.l' : 'l';
 	}
 
 	if (use12Hours) {
-		timeFormat += timeFormat.length >= 0 ? ' TT' : 'TT';
+		timeFormat += timeFormat.length > 0 ? ' TT' : 'TT';
 	}
 
 	return timeFormat;
 };
+
+export const isFunction = func =>
+	func && {}.toString.call(func) === '[object Function]';
