@@ -14,6 +14,9 @@ require('core-js/modules/es7.object.values');
 require('core-js/modules/es6.array.from');
 require('core-js/modules/es6.array.find');
 require('core-js/modules/es6.math.sign');
+require('core-js/fn/symbol/iterator.js');
+require('core-js/modules/es6.symbol');
+require('core-js/modules/es7.array.includes');
 
 // Object.assign() is commonly used with React.
 // It will use the native implementation if it's present and isn't buggy.
