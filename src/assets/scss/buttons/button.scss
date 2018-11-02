@@ -1,10 +1,11 @@
 .button {
 	text-align: center;
-	
+
 	.arrow {
 		@include themify($themes) {
-			border-color: themed('button_arrow_color');
+			border-color: themed("button_arrow_color");
 		}
+
 		border-width: 0 2px 2px 0;
 		border-style: solid;
 		display: inline-block;
@@ -15,7 +16,7 @@
 		&.arrow.up {
 			transform: rotate(-135deg);
 		}
-		
+
 		&.arrow.down {
 			transform: rotate(45deg);
 			margin-bottom: 2.5px;
@@ -33,16 +34,16 @@
 	&.disabled {
 		cursor: default;
 
-		 .arrow {
+		.arrow {
 			@include themify($themes) {
-				border-color: themed('disabled_button_arrow_color');
+				border-color: themed("disabled_button_arrow_color");
 			}
 		}
 	}
 
 	&:not( .disabled ):hover .arrow {
 		@include themify($themes) {
-			border-color: themed('hover_button_arrow_color');
+			border-color: themed("hover_button_arrow_color");
 		}
 	}
 }

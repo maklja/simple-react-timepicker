@@ -39,6 +39,11 @@ export const duplicateArrayValues = (values, stopLength, fromIndex = 0) => {
 
 export const roundValueByStep = (val, step) => Math.round(val / step) * step;
 
+export const TRANSLATE_DIRECTIONS = {
+	UP: 1,
+	DOWN: -1
+};
+
 export const nextTranslate = (translate, elementHeight, direction, n) =>
 	translate + n * elementHeight * direction;
 
@@ -211,10 +216,11 @@ export const getWheelInfo = el => {
 		curEl => curEl.classList.contains('offset-div') === false
 	);
 	// get container of each value and calculate accumulator of height
-	const valuesElementsSize = valuesChildren.reduce(
-		(accumulator, curEl) => accumulator + curEl.offsetHeight,
-		0
-	);
+	const valuesElementsSize = valuesChildren.reduce((accumulator, curEl) => {
+		const { height } = curEl.getBoundingClientRect();
+		// use bounding client rect because it is more preciss the offsetHeight on IE
+		return accumulator + height;
+	}, 0);
 
 	// calculate single element height
 	const elementHeight = valuesElementsSize / valuesChildren.length;
