@@ -5,7 +5,8 @@ $themes: (
 		disabled_value_color: darkgray,
 		inactive_value_color: inherit,
 		// choose wheel styles
-			wheel_value_border: #252525,
+			wheel_value_border: #dddddd,
+		wheel_value_shadow: darken(#dddddd, 50%),
 		// buttons
 			button_arrow_color: #252525,
 		disabled_button_arrow_color: darkgray,
@@ -15,7 +16,8 @@ $themes: (
 		time_picker_color: #252525,
 		time_picker_border_color: lightgray,
 		// time picker input
-			time_picker_input_overlay_background_color: rgba(23, 23, 23, 0.7)
+			overlay_background_color: rgba(23, 23, 23, 0.7),
+		overlay_input_region_background_color: darken(rgba(23, 23, 23, 0.1), 20%)
 	),
 	dark: (
 		// value styles
@@ -24,6 +26,7 @@ $themes: (
 		inactive_value_color: inherit,
 		// choose wheel styles
 			wheel_value_border: #dfdfdf,
+		wheel_value_shadow: lighten(#dfdfdf, 30%),
 		// buttons
 			button_arrow_color: white,
 		disabled_button_arrow_color: gray,
@@ -33,6 +36,7 @@ $themes: (
 		time_picker_color: #dfdfdf,
 		time_picker_border: 1px solid lightgray,
 		// time picker input
-			time_picker_input_overlay_background_color: rgba(23, 23, 23, 0.7)
+			overlay_background_color: rgba(23, 23, 23, 0.7),
+		overlay_input_region_background_color: darken(rgba(23, 23, 23, 0.1), 20%)
 	)
 ) !default;

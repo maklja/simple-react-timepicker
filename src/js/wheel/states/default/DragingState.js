@@ -1,6 +1,6 @@
 import { ChainState } from '../ChainState';
 import {
-	convertPostionToTranslate,
+	convertPositionToTranslate,
 	nextTranslateDelta,
 	arrayRotate,
 	nextOffset
@@ -25,7 +25,7 @@ export default class DragingState extends ChainState {
 			} = prevState;
 			// calculate distance between prevous position and current one
 			// and translate component by that value
-			const newTranslate = convertPostionToTranslate(
+			const newTranslate = convertPositionToTranslate(
 				this._position,
 				dragStartPosition,
 				translate

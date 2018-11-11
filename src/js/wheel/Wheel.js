@@ -1,25 +1,24 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Motion, spring } from 'react-motion';
+import AbstractWheelValueModifier from './value_modifiers/AbstractWheelValueModifier';
 
 export const Wheel = React.forwardRef(
 	(
 		{
 			values,
-			selectedIndex,
 			onMouseDown,
 			onMouseMove,
 			onTouchStart,
 			onTouchMove,
-			valueFormater,
 			translate,
 			offsetHeight,
-			disabled
+			disabled,
+			valueModifier
 		},
 		ref
 	) => {
 		const disabledClass = disabled ? 'disabled' : '';
-
 		return (
 			<div
 				ref={ref}
@@ -29,8 +28,7 @@ export const Wheel = React.forwardRef(
 				onMouseMove={onMouseMove}
 				tabIndex={disabled ? '' : '0'}
 				style={{
-					transform: `translateY(${translate}px)`,
-					touchAction: 'none' // TODO move
+					transform: `translateY(${translate}px)`
 				}}
 				className="wheel"
 			>
@@ -38,16 +36,23 @@ export const Wheel = React.forwardRef(
 					className="offset-div"
 					style={{ marginTop: offsetHeight }}
 				/>
-				{values.map((curVal, i) => (
-					<div
-						key={i}
-						className={`value ${
-							selectedIndex === i ? 'active' : 'inactive'
-						} ${disabledClass}`}
-					>
-						{valueFormater(curVal)}
-					</div>
-				))}
+				{values.map((curVal, i) => {
+					const isSelected = valueModifier.isSelected(curVal, i);
+					const valueStyles = valueModifier.getValueStyles(curVal, i);
+					const formatedValue = valueModifier.formatValue(curVal, i);
+
+					return (
+						<div
+							key={i}
+							className={`value ${
+								isSelected ? 'active' : 'inactive'
+							} ${disabledClass}`}
+							style={valueStyles}
+						>
+							{formatedValue}
+						</div>
+					);
+				})}
 			</div>
 		);
 	}
@@ -57,20 +62,17 @@ Wheel.propTypes = {
 	values: PropTypes.arrayOf(
 		PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 	).isRequired,
-	selectedIndex: PropTypes.number,
-	valueFormater: PropTypes.func,
 	onMouseDown: PropTypes.func,
 	onMouseMove: PropTypes.func,
 	translate: PropTypes.number,
 	offsetHeight: PropTypes.number,
 	onTouchStart: PropTypes.func,
 	onTouchMove: PropTypes.func,
-	disabled: PropTypes.bool
+	disabled: PropTypes.bool,
+	valueModifier: PropTypes.instanceOf(AbstractWheelValueModifier).isRequired
 };
 
 Wheel.defaultProps = {
-	selectedValue: 0,
-	valueFormater: val => val,
 	onMouseDown: () => {},
 	onMouseMove: () => {},
 	translate: 0,
@@ -114,8 +116,6 @@ AnimationWheel.defaultProps = {
 
 export const WheelPickerBody = ({
 	values,
-	selectedIndex,
-	valueFormater,
 	onMouseDown,
 	onMouseMove,
 	onMouseUp,
@@ -132,12 +132,13 @@ export const WheelPickerBody = ({
 	animation,
 	onKeyDown,
 	currentValueStyle,
-	setRef
+	setRef,
+	valueModifier
 }) => {
 	return (
 		<div
 			style={{
-				height: ` ${elementHeight}px`
+				height: `${elementHeight}px`
 			}}
 			className="wheel-picker"
 			onKeyDown={onKeyDown}
@@ -161,11 +162,10 @@ export const WheelPickerBody = ({
 						onTouchMove={onTouchMove}
 						onMouseDown={onMouseDown}
 						onMouseMove={onMouseMove}
-						selectedIndex={selectedIndex}
-						valueFormater={valueFormater}
 						translate={translate}
 						offsetHeight={offsetHeight}
 						disabled={disabled}
+						valueModifier={valueModifier}
 					/>
 				) : (
 					<Wheel
@@ -175,11 +175,10 @@ export const WheelPickerBody = ({
 						onTouchMove={onTouchMove}
 						onMouseDown={onMouseDown}
 						onMouseMove={onMouseMove}
-						selectedIndex={selectedIndex}
-						valueFormater={valueFormater}
 						translate={translate}
 						offsetHeight={offsetHeight}
 						disabled={disabled}
+						valueModifier={valueModifier}
 					/>
 				)}
 			</div>

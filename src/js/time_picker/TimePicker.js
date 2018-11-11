@@ -3,16 +3,21 @@ import PropTypes from 'prop-types';
 
 import {
 	generateArrayValues,
-	timeFormater,
 	roundDate,
 	themeClassName
 } from '../utils/helper';
 import WheelPicker from '../wheel/WheelPicker';
+import TimeFormaterWheelValueModifier from '../wheel/value_modifiers/TimeFormaterWheelValueModifier';
 
 import '../../assets/scss/time_picker/index.scss';
 
 const MERIDIEMS = { AM: 'AM', PM: 'PM' };
 const { AM, PM } = MERIDIEMS;
+
+const timeFormaterFactory = n => {
+	return (selectedIndex, expandSize) =>
+		new TimeFormaterWheelValueModifier(selectedIndex, expandSize, n);
+};
 
 export default class TimePicker extends React.Component {
 	constructor(props) {
@@ -116,7 +121,7 @@ export default class TimePicker extends React.Component {
 								stepHour,
 								use12Hours ? 1 : 0
 							)}
-							valueFormater={timeFormater(2)}
+							valueModifierFactory={timeFormaterFactory(2)}
 							disabled={disableHour}
 							onChange={this._onValueChange}
 							selectedIndex={hour}
@@ -137,7 +142,7 @@ export default class TimePicker extends React.Component {
 							// don't put theme class on child component too
 							theme={null}
 							values={generateArrayValues(60, stepMinute)}
-							valueFormater={timeFormater(2)}
+							valueModifierFactory={timeFormaterFactory(2)}
 							disabled={disableMinutes}
 							onChange={this._onValueChange}
 							selectedIndex={minute}
@@ -158,7 +163,7 @@ export default class TimePicker extends React.Component {
 							// don't put theme class on child component too
 							theme={null}
 							values={generateArrayValues(60, stepSecond)}
-							valueFormater={timeFormater(2)}
+							valueModifierFactory={timeFormaterFactory(2)}
 							disabled={disableSeconds}
 							onChange={this._onValueChange}
 							selectedIndex={second}
@@ -179,7 +184,7 @@ export default class TimePicker extends React.Component {
 							// don't put theme class on child component too
 							theme={null}
 							values={generateArrayValues(1000, stepMilliseconds)}
-							valueFormater={timeFormater(3)}
+							valueModifierFactory={timeFormaterFactory(3)}
 							disabled={disableMilliseconds}
 							onChange={this._onValueChange}
 							selectedIndex={millisecond}

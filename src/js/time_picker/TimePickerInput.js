@@ -58,37 +58,39 @@ export default class TimePickerInput extends React.Component {
 
 		const themeClass = themeClassName(theme);
 		return (
-			<div
-				className={`time-picker-input ${themeClass} ${
-					useOverlay ? 'overlay' : ''
-				}`}
-			>
-				<div>
-					<input
-						type="text"
-						readOnly={readOnly}
-						disabled={disabled}
-						value={formatedValue}
-						onChange={this._onChange}
-						onFocus={this._onFocus}
-						onClick={this._onClick}
-					/>
-				</div>
-				{visible ? (
-					<div className="holder">
-						<TimePicker
-							{...this.props}
-							// don't put theme class on child component too
-							theme={null}
-							value={value}
+			<div className={`${themeClass}`}>
+				<div
+					className={`time-picker-input ${
+						useOverlay ? 'overlay' : ''
+					}`}
+				>
+					<div>
+						<input
+							type="text"
+							readOnly={readOnly}
+							disabled={disabled}
+							value={formatedValue}
+							onChange={this._onChange}
 							onFocus={this._onFocus}
-							onBlur={this._onBlur}
-							onValueChange={this._onTimePickerChange}
+							onClick={this._onClick}
 						/>
 					</div>
-				) : (
-					''
-				)}
+					{visible ? (
+						<div className="holder">
+							<TimePicker
+								{...this.props}
+								// don't put theme class on child component too
+								theme={null}
+								value={value}
+								onFocus={this._onFocus}
+								onBlur={this._onBlur}
+								onValueChange={this._onTimePickerChange}
+							/>
+						</div>
+					) : (
+						''
+					)}
+				</div>
 			</div>
 		);
 	}

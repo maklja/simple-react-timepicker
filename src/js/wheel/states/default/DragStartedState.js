@@ -50,6 +50,9 @@ export default class DragStartedState extends ChainState {
 				? {}
 				: checkInsufficientSpace(
 						this._wheelElementHolder.getBoundingClientRect(),
+						{
+							height: window.innerHeight
+						},
 						selectedIndex,
 						elementHeight,
 						values,

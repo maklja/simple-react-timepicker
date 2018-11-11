@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import Button, { DIRECTION } from '../buttons/DefaultButton';
 import WheelPickerCore from './WheelPickerCore';
 import { themeClassName } from '../utils/helper';
+import DefaultWheelValueModifier from './value_modifiers/DefaultWheelValueModifier';
 
 export default class WheelPicker extends React.Component {
 	constructor(props) {
@@ -22,7 +23,7 @@ export default class WheelPicker extends React.Component {
 
 	render() {
 		const {
-			valueFormater,
+			valueModifierFactory,
 			enableAnimation,
 			showButtons,
 			disabled,
@@ -57,7 +58,7 @@ export default class WheelPicker extends React.Component {
 					selectedIndex={selectedIndex}
 					expandSize={expandSize}
 					enableAnimation={enableAnimation}
-					valueFormater={valueFormater}
+					valueModifierFactory={valueModifierFactory}
 					onWheel={this._onWheel}
 					disabled={disabled}
 					onKeyDown={this._onKeyDown}
@@ -139,7 +140,7 @@ WheelPicker.propTypes = {
 	).isRequired,
 	selectedIndex: PropTypes.number,
 	expandSize: PropTypes.number,
-	valueFormater: PropTypes.func,
+	valueModifierFactory: PropTypes.func,
 	showButtons: PropTypes.bool,
 	alwaysExpand: PropTypes.bool,
 	enableAnimation: PropTypes.bool,
@@ -154,7 +155,8 @@ WheelPicker.defaultProps = {
 	name: '',
 	selectedIndex: 0,
 	expandSize: 4,
-	valueFormater: val => val,
+	valueModifierFactory: (selectedIndex, expandSize) =>
+		new DefaultWheelValueModifier(selectedIndex, expandSize),
 	showButtons: true,
 	alwaysExpand: false,
 	enableAnimation: true,

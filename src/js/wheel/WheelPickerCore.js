@@ -17,6 +17,7 @@ import {
 
 import DefaultDragStrategy from '../strategy/DefaultDragStrategy';
 import AlwaysExpandStrategy from '../strategy/AlwaysExpandStrategy';
+import DefaultWheelValueModifier from './value_modifiers/DefaultWheelValueModifier';
 
 import '../../assets/scss/wheel/index.scss';
 
@@ -46,7 +47,7 @@ export default class WheelPickerCore extends React.Component {
 			// some times in choose phase we dont have space to show
 			// whole wheel because window edge, so we move wheel left or right
 			// using margin
-			marginLeft: 0,
+			marginLeft: 0, // TODO
 			// set currently selected value
 			selectedIndex: null,
 			dragStarted: false,
@@ -336,18 +337,21 @@ export default class WheelPickerCore extends React.Component {
 		if (this._el.current == null) {
 			return {};
 		}
-		const { elementHeight, expandSize, marginLeft } = this.state;
+		const { elementHeight, expandSize } = this.state;
 		const { offsetTop, offsetBottom } = windowAvailableSpace(
 			elementHeight,
 			expandSize,
-			this._el.current.getBoundingClientRect()
+			this._el.current.getBoundingClientRect(),
+			{
+				height: window.innerHeight
+			}
 		);
 		const marginTop = offsetBottom - offsetTop;
 
 		return {
 			height: `${elementHeight * (2 * expandSize + 1) +
 				EXTEND_PADDING}px`,
-			margin: `${marginTop}px 0 0 ${marginLeft}px`
+			marginTop: `${marginTop}px`
 		};
 	}
 
@@ -385,7 +389,7 @@ export default class WheelPickerCore extends React.Component {
 	}
 
 	render() {
-		const { valueFormater, enableAnimation, disabled } = this.props;
+		const { enableAnimation, disabled, valueModifierFactory } = this.props;
 
 		const {
 			translate,
@@ -403,8 +407,8 @@ export default class WheelPickerCore extends React.Component {
 			this.props
 		);
 
-		// is component is in  choose mode we need to calculate the view port so the user can
-		// see more vvalues from the wheel
+		// if component is in  choose mode we need to calculate the view port so the user can
+		// see more values from the wheel
 		const chooseStyle = expanded ? this._getChooseStyle() : {};
 		// if choose started we need to translate whole view port up so the selectet value
 		// stays in the middle while active values are visible around it
@@ -418,6 +422,11 @@ export default class WheelPickerCore extends React.Component {
 		// is not visible on edge, so show 1 element more on above and bellow
 		const visibleValues = getVisibleValues(values, expandSize);
 		const themeClass = themeClassName(theme);
+
+		const valueModifier = valueModifierFactory(
+			this._getHighlightedIndex(),
+			expandSize
+		);
 
 		return (
 			<div
@@ -433,7 +442,6 @@ export default class WheelPickerCore extends React.Component {
 						enableAnimation && this._isDragStarted() === false
 					}
 					offsetHeight={offsetHeight}
-					valueFormater={valueFormater}
 					translate={translateY}
 					onTouchStart={this._onTouchStart}
 					onTouchEnd={this._onTouchEnd}
@@ -447,6 +455,7 @@ export default class WheelPickerCore extends React.Component {
 					disabled={disabled}
 					onKeyDown={this._onKeyDown}
 					currentValueStyle={chooseStyle}
+					valueModifier={valueModifier}
 				/>
 			</div>
 		);
@@ -461,7 +470,6 @@ WheelPickerCore.propTypes = {
 		PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 	).isRequired,
 	selectedIndex: PropTypes.number,
-	valueFormater: PropTypes.func,
 	enableAnimation: PropTypes.bool,
 	disabled: PropTypes.bool,
 	maintainSelectedValuePosition: PropTypes.bool,
@@ -474,7 +482,8 @@ WheelPickerCore.propTypes = {
 	onKeyDown: PropTypes.func,
 	onDragStarted: PropTypes.func,
 	onDragStoped: PropTypes.func,
-	theme: PropTypes.string
+	theme: PropTypes.string,
+	valueModifierFactory: PropTypes.func
 };
 
 WheelPickerCore.defaultProps = {
@@ -482,7 +491,6 @@ WheelPickerCore.defaultProps = {
 	alwaysExpand: false,
 	name: null,
 	selectedIndex: 0,
-	valueFormater: val => val,
 	enableAnimation: true,
 	disabled: false,
 	maintainSelectedValuePosition: true,
@@ -495,5 +503,7 @@ WheelPickerCore.defaultProps = {
 	onKeyDown: () => {},
 	onDragStarted: () => {},
 	onDragStoped: () => {},
-	theme: 'light'
+	theme: 'light',
+	valueModifierFactory: (selectedIndex, expandSize) =>
+		new DefaultWheelValueModifier(selectedIndex, expandSize)
 };

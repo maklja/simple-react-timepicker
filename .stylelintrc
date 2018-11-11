@@ -38,7 +38,7 @@
         "selector-pseudo-class-parentheses-space-inside": "always",
         "selector-no-vendor-prefix": true,
         "selector-max-universal": 0,
-        "selector-max-combinators": 2,
+        "selector-max-combinators": 3,
         "selector-max-type": 0,
         "media-feature-range-operator-space-before": "always",
         "media-feature-range-operator-space-after": "always",

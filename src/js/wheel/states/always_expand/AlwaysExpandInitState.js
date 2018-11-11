@@ -13,6 +13,9 @@ export default class AlwaysExpandInitState extends InitState {
 				alwaysExpand && maintainSelectedValuePosition
 					? checkInsufficientSpace(
 							this._wheelElementHolder.getBoundingClientRect(),
+							{
+								height: window.innerHeight
+							},
 							nextState.selectedIndex,
 							nextState.elementHeight,
 							values,

@@ -12,12 +12,18 @@
 	border-radius: 2px;
 	transition: background-color 0.2s ease-in-out;
 
+	.wheel {
+		perspective: 200px;
+		touch-action: none;
+	}
+
 	.current-value {
 		width: 100%;
 		position: absolute;
 		height: 100%;
 		z-index: 1;
 		overflow: hidden;
+		transition: height 0.1s ease-in, margin 0.1s ease-in;
 	}
 
 	.value {
@@ -56,22 +62,25 @@
 		margin-left: -50%;
 		z-index: 10;
 
+		.current-value {
+			border-radius: 4px;
+			width: 110%;
+			padding-right: 3px;
+		}
+
 		.value {
 			padding: $wheel_value_padding;
-			border-top-width: 1px;
-			border-top-style: solid;
+			border-width: 1px 1px 0;
+			border-style: solid;
 
 			@include themify($themes) {
-				border-top-color: themed("wheel_value_border");
+				box-shadow: 3px 0 3px -1px themed("wheel_value_shadow");
+				border-color: themed("wheel_value_border");
 			}
 
 			&.active {
 				font-size: $wheel_active_font_size;
 			}
-		}
-
-		.current-value {
-			border-radius: 4px;
 		}
 
 		.wheel:focus {

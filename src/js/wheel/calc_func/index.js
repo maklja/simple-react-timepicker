@@ -54,26 +54,34 @@ export const windowAvailableSpace = (
 	elementHeight,
 	n,
 	boundingBox,
+	parentBoundingBox,
 	padding = 10
 ) => {
 	let { top, bottom } = boundingBox;
-	const { innerHeight } = window;
+	const { height } = parentBoundingBox;
+
+	if (top > height) {
+		throw new Error('Invalid bounding box value top.');
+	}
+
+	if (bottom > height) {
+		throw new Error('Invalid bounding box value bottom.');
+	}
 
 	top -= padding;
 	bottom += padding;
 	// calculate top available space
 	// calculate how many elements can fit before time picker
-	const maxSpaceTop = Math.min(n, Math.round(top / elementHeight));
+	const maxSpaceTop = Math.min(n, Math.floor(top / elementHeight));
 	const offsetTop = maxSpaceTop * elementHeight;
 
 	// calculate bottom available space
 	// calculate how many elements can fit after time picker
 	const maxSpaceBottom = Math.min(
 		n,
-		Math.round(Math.abs(innerHeight - bottom) / elementHeight)
+		Math.floor(Math.abs(height - bottom) / elementHeight)
 	);
-
-	const offsetBottom = (n - maxSpaceBottom) * elementHeight * -1;
+	const offsetBottom = (maxSpaceBottom - n) * elementHeight;
 
 	return {
 		maxSpaceTop,
@@ -152,6 +160,7 @@ export const translateInsufficientSpace = (
 
 export const checkInsufficientSpace = (
 	elementBoundingRect,
+	parentBoundingBox,
 	selectedIndex,
 	elementHeight,
 	values,
@@ -162,7 +171,8 @@ export const checkInsufficientSpace = (
 	const { maxSpaceTop, maxSpaceBottom } = windowAvailableSpace(
 		elementHeight,
 		expandSize,
-		elementBoundingRect
+		elementBoundingRect,
+		parentBoundingBox
 	);
 
 	return translateInsufficientSpace(
@@ -175,7 +185,7 @@ export const checkInsufficientSpace = (
 	);
 };
 
-export const convertPostionToTranslate = (
+export const convertPositionToTranslate = (
 	newPosition,
 	prevPosition,
 	currentTranslate
